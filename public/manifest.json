@@ -1,0 +1,16 @@
+{
+  "name": "GattiPay",
+  "short_name": "GattiPay",
+  "description": "Decentralized crypto payments — simple as GPay",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#06d6a0",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

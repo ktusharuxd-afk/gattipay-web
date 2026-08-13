@@ -57,19 +57,19 @@ export default function Home() {
       )}
 
       {/* Quick Actions */}
-      <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px", position: "relative", zIndex: 10 }}>
         {[
           { icon: "↑", label: "Send" },
           { icon: "↓", label: "Receive" },
           { icon: "⊙", label: "Scan" },
           { icon: "⇄", label: "Swap" },
         ].map((action) => (
-          <div key={action.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
+          <button key={action.label} onClick={() => alert(action.label)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
             <div style={{ width: 60, height: 60, background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
               {action.icon}
             </div>
             <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{action.label}</span>
-          </div>
+          </button>
         ))}
       </div>
 
