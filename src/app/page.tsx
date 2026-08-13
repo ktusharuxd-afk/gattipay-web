@@ -2,35 +2,35 @@
 import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState("light");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 20px 0" }}>
-        <span style={{ fontSize: 22, fontWeight: 700, color: "var(--accent)" }}>GattiPay</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 20px 0" }}>
+        <span style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)", letterSpacing: "-0.5px" }}>GattiPay</span>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button onClick={toggleTheme} style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 14px", color: "var(--text-muted)", fontSize: 13, cursor: "pointer" }}>
-            {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+          <button onClick={toggleTheme} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 14px", color: "var(--text-muted)", fontSize: 12, cursor: "pointer" }}>
+            {theme === "light" ? "🌙 Dark" : "☀️ Light"}
           </button>
-          <span style={{ fontSize: 12, background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 12px", color: "var(--green)" }}>● Connected</span>
+          <span style={{ fontSize: 12, background: "var(--surface2)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 12px", color: "var(--green)", fontWeight: 500 }}>● Connected</span>
         </div>
       </div>
 
       {/* Balance Card */}
-      <div style={{ margin: "20px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: "24px 20px" }}>
-        <div style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 6 }}>Total balance</div>
-        <div style={{ fontSize: 36, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>₹0.00</div>
+      <div style={{ margin: "24px 16px 0", background: "var(--accent)", borderRadius: 24, padding: "28px 24px" }}>
+        <div style={{ color: "rgba(0,0,0,0.5)", fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Total balance</div>
+        <div style={{ fontSize: 42, fontWeight: 800, color: "#0d1117", marginBottom: 20, letterSpacing: "-1px" }}>₹0.00</div>
         <div style={{ display: "flex", gap: 8 }}>
           {["HON", "ETH", "wHON"].map((asset) => (
-            <span key={asset} style={{ fontSize: 12, background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 12px", color: "var(--text-muted)" }}>
+            <span key={asset} style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
               {asset} 0.00
             </span>
           ))}
@@ -38,7 +38,7 @@ export default function Home() {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ display: "flex", justifyContent: "space-around", margin: "0 16px 24px" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px" }}>
         {[
           { icon: "↑", label: "Send" },
           { icon: "↓", label: "Receive" },
@@ -46,24 +46,24 @@ export default function Home() {
           { icon: "⇄", label: "Swap" },
         ].map((action) => (
           <div key={action.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
-            <div style={{ width: 56, height: 56, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
+            <div style={{ width: 60, height: 60, background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
               {action.icon}
             </div>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{action.label}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{action.label}</span>
           </div>
         ))}
       </div>
 
       {/* Recent Activity */}
       <div style={{ flex: 1, margin: "0 16px" }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-muted)", marginBottom: 12 }}>Recent activity</div>
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px 20px", color: "var(--text-muted)", fontSize: 14, textAlign: "center" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 14 }}>Recent activity</div>
+        <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "20px", color: "var(--text-muted)", fontSize: 14, textAlign: "center" }}>
           No transactions yet
         </div>
       </div>
 
       {/* Bottom Nav */}
-      <div style={{ display: "flex", justifyContent: "space-around", padding: "16px 0 24px", borderTop: "1px solid var(--border)", marginTop: 24, background: "var(--bg)" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", padding: "16px 0 28px", borderTop: "1.5px solid var(--border)", marginTop: 24, background: "var(--bg)" }}>
         {[
           { icon: "⌂", label: "Home", active: true },
           { icon: "◈", label: "Wallet" },
@@ -72,7 +72,7 @@ export default function Home() {
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
             <span style={{ fontSize: 20, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>
-            <span style={{ fontSize: 11, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.label}</span>
+            <span style={{ fontSize: 11, fontWeight: item.active ? 600 : 400, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.label}</span>
           </div>
         ))}
       </div>
