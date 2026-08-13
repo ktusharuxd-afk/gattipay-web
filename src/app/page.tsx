@@ -1,11 +1,27 @@
+"use client";
+import { useState, useEffect } from "react";
+
 export default function Home() {
+  const [theme, setTheme] = useState("dark");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)" }}>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 20px 0" }}>
-        <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)" }}>GattiPay</span>
-        <span style={{ fontSize: 12, background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 12px", color: "var(--green)" }}>● Wallet connected</span>
+        <span style={{ fontSize: 22, fontWeight: 700, color: "var(--accent)" }}>GattiPay</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button onClick={toggleTheme} style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 14px", color: "var(--text-muted)", fontSize: 13, cursor: "pointer" }}>
+            {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+          </button>
+          <span style={{ fontSize: 12, background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 12px", color: "var(--green)" }}>● Connected</span>
+        </div>
       </div>
 
       {/* Balance Card */}
@@ -30,7 +46,7 @@ export default function Home() {
           { icon: "⇄", label: "Swap" },
         ].map((action) => (
           <div key={action.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
-            <div style={{ width: 56, height: 56, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--gold)" }}>
+            <div style={{ width: 56, height: 56, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
               {action.icon}
             </div>
             <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{action.label}</span>
@@ -55,8 +71,8 @@ export default function Home() {
           { icon: "◯", label: "Profile" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
-            <span style={{ fontSize: 20, color: item.active ? "var(--gold)" : "var(--text-muted)" }}>{item.icon}</span>
-            <span style={{ fontSize: 11, color: item.active ? "var(--gold)" : "var(--text-muted)" }}>{item.label}</span>
+            <span style={{ fontSize: 20, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>
+            <span style={{ fontSize: 11, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.label}</span>
           </div>
         ))}
       </div>
