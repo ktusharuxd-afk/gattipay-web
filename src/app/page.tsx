@@ -1,14 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 
 export default function Home() {
   const [theme, setTheme] = useState("light");
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
+
+  const shortAddress = address
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)" }}>
@@ -20,7 +27,9 @@ export default function Home() {
           <button onClick={toggleTheme} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 14px", color: "var(--text-muted)", fontSize: 12, cursor: "pointer" }}>
             {theme === "light" ? "🌙 Dark" : "☀️ Light"}
           </button>
-          <span style={{ fontSize: 12, background: "var(--surface2)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 12px", color: "var(--green)", fontWeight: 500 }}>● Connected</span>
+          <button onClick={() => open()} style={{ fontSize: 12, background: isConnected ? "var(--surface2)" : "var(--accent)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 12px", color: isConnected ? "var(--green)" : "#0d1117", fontWeight: 600, cursor: "pointer" }}>
+            {isConnected ? `● ${shortAddress}` : "Connect Wallet"}
+          </button>
         </div>
       </div>
 
@@ -36,6 +45,16 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* Connect Prompt */}
+      {!isConnected && (
+        <div style={{ margin: "16px 16px 0", background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "16px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 10 }}>Connect your wallet to view balances</div>
+          <button onClick={() => open()} style={{ background: "var(--accent)", border: "none", borderRadius: 12, padding: "10px 24px", color: "#0d1117", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+            Connect Wallet
+          </button>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px" }}>
