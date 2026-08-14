@@ -95,7 +95,11 @@ export default function Home() {
     n > 0 ? `₹${n.toLocaleString("en-IN")}` : "—";
 
  if (currentPage === "send") {
-    return <SendPage onBack={() => setCurrentPage("home")} />;
+    return <SendPage onBack={() => {
+      const saved = localStorage.getItem("gattipay_txns");
+      if (saved) setTransactions(JSON.parse(saved));
+      setCurrentPage("home");
+    }} />;
   }
 
   if (currentPage === "receive") {
