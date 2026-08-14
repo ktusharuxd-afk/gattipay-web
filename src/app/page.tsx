@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
+import ScanPage from "./scan";
 
 interface Prices {
   eth: number;
@@ -62,6 +63,10 @@ export default function Home() {
     return <ReceivePage onBack={() => setCurrentPage("home")} />;
   }
 
+  if (currentPage === "scan") {
+    return <ScanPage onBack={() => setCurrentPage("home")} onScan={(addr) => { setCurrentPage("send"); }} />;
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)", position: "relative", zIndex: 1 }}>
 
@@ -110,7 +115,7 @@ export default function Home() {
         {[
           { icon: "↑", label: "Send", action: () => setCurrentPage("send") },
           { icon: "↓", label: "Receive", action: () => setCurrentPage("receive") },
-          { icon: "⊙", label: "Scan", action: () => alert("Scan") },
+          { icon: "⊙", label: "Scan", action: () => setCurrentPage("scan") },
           { icon: "⇄", label: "Swap", action: () => alert("Swap") },
         ].map((action) => (
           <button key={action.label} onClick={action.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
