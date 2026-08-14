@@ -13,6 +13,7 @@ import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
 import SwapPage from "./swap";
+import HistoryPage from "./history";
 
 interface Prices {
   eth: number;
@@ -112,6 +113,10 @@ export default function Home() {
 
   if (currentPage === "swap") {
     return <SwapPage onBack={() => setCurrentPage("home")} />;
+  }
+
+   if (currentPage === "history") {
+    return <HistoryPage onBack={() => setCurrentPage("home")} />;
   }
 
   return (
@@ -241,10 +246,10 @@ export default function Home() {
         {[
           { icon: "⌂", label: "Home", active: true },
           { icon: "◈", label: "Wallet" },
-          { icon: "≡", label: "History" },
+          { icon: "≡", label: "History", action: () => setCurrentPage("history") },
           { icon: "◯", label: "Profile" },
         ].map((item) => (
-          <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
+          <div key={item.label} onClick={() => item.action && item.action()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
             <span style={{ fontSize: 20, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>
             <span style={{ fontSize: 11, fontWeight: item.active ? 600 : 400, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.label}</span>
           </div>
