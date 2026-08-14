@@ -38,9 +38,7 @@ export default function Home() {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin&vs_currencies=inr"
-        );
+        const res = await fetch("/api/prices");
         const data = await res.json();
         setPrices({
           eth: data.ethereum?.inr || 0,
