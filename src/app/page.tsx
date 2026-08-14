@@ -96,11 +96,9 @@ export default function Home() {
           </button>
           <button 
             onClick={() => { 
-              const modal = document.querySelector('w3m-modal') as any;
+              const modal = document.querySelector('w3m-modal') as HTMLElement;
               if (modal) {
-                modal.style.display = 'block';
-                modal.style.pointerEvents = 'all';
-                modal.setAttribute('open', '');
+                modal.removeAttribute('style');
               }
               open({ view: isConnected ? "Account" : "Connect" });
             }}
