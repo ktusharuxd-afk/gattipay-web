@@ -29,7 +29,7 @@ createAppKit({
     "--w3m-accent": "#06d6a0",
     "--w3m-border-radius-master": "12px",
   },
-  allowUnsafeAttr: true,
+  
 });
 
 export default function Providers({ children }: { children: ReactNode }) {

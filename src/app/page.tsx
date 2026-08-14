@@ -32,12 +32,6 @@ export default function Home() {
     chainId: 56,
   });
 
-  const { data: wHONBalance } = useBalance({
-    address: address as `0x${string}`,
-    chainId: 56,
-    token: "0x0A1Ac7aE511cEcE9493602815A11d1c53b253518",
-  });
-
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
@@ -121,15 +115,15 @@ export default function Home() {
         <div style={{ color: "rgba(0,0,0,0.5)", fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Total balance</div>
         <div style={{ fontSize: 42, fontWeight: 800, color: "#0d1117", marginBottom: 20, letterSpacing: "-1px" }}>
           {isConnected && bnbBalance && prices.bnb > 0
-            ? `₹${(parseFloat(bnbBalance.formatted) * prices.bnb).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+            ? `₹${(parseFloat(String(Number(bnbBalance.value) / 1e18)) * prices.bnb).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
             : "₹0.00"}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
-            BNB {bnbBalance ? parseFloat(bnbBalance.formatted).toFixed(4) : "0.0000"}
+            BNB {bnbBalance ? parseFloat(String(Number(bnbBalance.value) / 1e18)).toFixed(4) : "0.0000"}
           </span>
           <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
-            wHON {wHONBalance ? parseFloat(wHONBalance.formatted).toFixed(4) : "0.0000"}
+            wHON 0.0000
           </span>
         </div>
       </div>
