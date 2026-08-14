@@ -41,14 +41,3 @@ html, body {
   margin: 0 auto;
   transition: background 0.2s ease, color 0.2s ease;
 }
-w3m-modal {
-  z-index: 9999 !important;
-}
-
-w3m-modal::part(overlay) {
-  pointer-events: none !important;
-}
-
-w3m-modal[open]::part(overlay) {
-  pointer-events: all !important;
-}
