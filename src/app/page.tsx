@@ -47,6 +47,18 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const modal = document.querySelector("w3m-modal") as HTMLElement;
+      if (modal) {
+        const isOpen = modal.hasAttribute("open");
+        modal.style.pointerEvents = isOpen ? "all" : "none";
+        modal.style.display = isOpen ? "block" : "none";
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
   const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
 
   const shortAddress = address
@@ -67,7 +79,7 @@ export default function Home() {
   if (currentPage === "scan") {
     return <ScanPage onBack={() => setCurrentPage("home")} onScan={(addr) => { setCurrentPage("send"); }} />;
   }
-  
+
   if (currentPage === "swap") {
     return <SwapPage onBack={() => setCurrentPage("home")} />;
   }
