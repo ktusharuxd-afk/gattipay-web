@@ -4,7 +4,7 @@ import { wagmiAdapter, projectId, networks } from "./config";
 import { createAppKit } from "@reown/appkit/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +20,7 @@ createAppKit({
     icons: ["https://gattipay-web.vercel.app/favicon.ico"],
   },
   features: {
-    analytics: true,
+    analytics: false,
     email: false,
     socials: false,
   },
@@ -30,10 +30,31 @@ createAppKit({
   },
 });
 
+function ModalFix() {
+  useEffect(() => {
+    const fix = () => {
+      const modal = document.querySelector("w3m-modal");
+      if (modal) {
+        const style = document.createElement("style");
+        style.textContent = `
+          w3m-modal:not([open]) {
+            display: none !important;
+            pointer-events: none !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    };
+    setTimeout(fix, 1000);
+  }, []);
+  return null;
+}
+
 export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
+        <ModalFix />
         {children}
       </QueryClientProvider>
     </WagmiProvider>
