@@ -1,7 +1,7 @@
 {
   "name": "GattiPay",
   "short_name": "GattiPay",
-  "description": "Decentralized crypto payments — simple as GPay",
+  "description": "Decentralized crypto payments — simple as a tap",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
