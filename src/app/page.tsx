@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import SendPage from "./send";
+import ReceivePage from "./receive";
 
 interface Prices {
   eth: number;
@@ -53,8 +54,12 @@ export default function Home() {
   const formatINR = (n: number) =>
     n > 0 ? `₹${n.toLocaleString("en-IN")}` : "—";
 
-  if (currentPage === "send") {
+ if (currentPage === "send") {
     return <SendPage onBack={() => setCurrentPage("home")} />;
+  }
+
+  if (currentPage === "receive") {
+    return <ReceivePage onBack={() => setCurrentPage("home")} />;
   }
 
   return (
@@ -104,7 +109,7 @@ export default function Home() {
       <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px", position: "relative", zIndex: 10 }}>
         {[
           { icon: "↑", label: "Send", action: () => setCurrentPage("send") },
-          { icon: "↓", label: "Receive", action: () => alert("Receive") },
+          { icon: "↓", label: "Receive", action: () => setCurrentPage("receive") },
           { icon: "⊙", label: "Scan", action: () => alert("Scan") },
           { icon: "⇄", label: "Swap", action: () => alert("Swap") },
         ].map((action) => (
