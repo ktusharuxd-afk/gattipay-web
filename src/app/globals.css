@@ -42,11 +42,13 @@ html, body {
   transition: background 0.2s ease, color 0.2s ease;
 }
 w3m-modal {
-  position: fixed !important;
-  z-index: 999 !important;
-  pointer-events: none;
+  z-index: 9999 !important;
 }
 
-w3m-modal[open] {
-  pointer-events: all;
+w3m-modal::part(overlay) {
+  pointer-events: none !important;
+}
+
+w3m-modal[open]::part(overlay) {
+  pointer-events: all !important;
 }
