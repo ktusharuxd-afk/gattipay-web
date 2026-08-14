@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import { useBalance } from "wagmi";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -19,6 +20,16 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState("home");
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
+  const { data: bnbBalance } = useBalance({
+    address: address as `0x${string}`,
+    chainId: 56,
+  });
+
+  const { data: wHONBalance } = useBalance({
+    address: address as `0x${string}`,
+    chainId: 56,
+    token: "0x0A1Ac7aE511cEcE9493602815A11d1c53b253518",
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -103,17 +114,18 @@ export default function Home() {
       {/* Balance Card */}
       <div style={{ margin: "24px 16px 0", background: "var(--accent)", borderRadius: 24, padding: "28px 24px" }}>
         <div style={{ color: "rgba(0,0,0,0.5)", fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Total balance</div>
-        <div style={{ fontSize: 42, fontWeight: 800, color: "#0d1117", marginBottom: 20, letterSpacing: "-1px" }}>₹0.00</div>
+        <div style={{ fontSize: 42, fontWeight: 800, color: "#0d1117", marginBottom: 20, letterSpacing: "-1px" }}>
+          {isConnected && bnbBalance && prices.bnb > 0
+            ? `₹${(parseFloat(bnbBalance.formatted) * prices.bnb).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+            : "₹0.00"}
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {[
-            { label: "ETH", price: prices.eth },
-            { label: "BNB", price: prices.bnb },
-            { label: "wHON", price: prices.whon },
-          ].map((asset) => (
-            <span key={asset.label} style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
-              {asset.label} {loadingPrices ? "..." : formatINR(asset.price)}
-            </span>
-          ))}
+          <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
+            BNB {bnbBalance ? parseFloat(bnbBalance.formatted).toFixed(4) : "0.0000"}
+          </span>
+          <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
+            wHON {wHONBalance ? parseFloat(wHONBalance.formatted).toFixed(4) : "0.0000"}
+          </span>
         </div>
       </div>
 
