@@ -41,3 +41,12 @@ html, body {
   margin: 0 auto;
   transition: background 0.2s ease, color 0.2s ease;
 }
+w3m-modal {
+  position: fixed !important;
+  z-index: 999 !important;
+  pointer-events: none;
+}
+
+w3m-modal[open] {
+  pointer-events: all;
+}
