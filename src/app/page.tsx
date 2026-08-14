@@ -4,6 +4,7 @@ import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
+import SwapPage from "./swap";
 
 interface Prices {
   eth: number;
@@ -66,6 +67,10 @@ export default function Home() {
   if (currentPage === "scan") {
     return <ScanPage onBack={() => setCurrentPage("home")} onScan={(addr) => { setCurrentPage("send"); }} />;
   }
+  
+  if (currentPage === "swap") {
+    return <SwapPage onBack={() => setCurrentPage("home")} />;
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)", position: "relative", zIndex: 1 }}>
@@ -116,7 +121,7 @@ export default function Home() {
           { icon: "↑", label: "Send", action: () => setCurrentPage("send") },
           { icon: "↓", label: "Receive", action: () => setCurrentPage("receive") },
           { icon: "⊙", label: "Scan", action: () => setCurrentPage("scan") },
-          { icon: "⇄", label: "Swap", action: () => alert("Swap") },
+          { icon: "⇄", label: "Swap", action: () => setCurrentPage("swap") },
         ].map((action) => (
           <button key={action.label} onClick={action.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
             <div style={{ width: 60, height: 60, background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
