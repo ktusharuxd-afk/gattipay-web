@@ -17,7 +17,7 @@ createAppKit({
   metadata: {
     name: "GattiPay",
     description: "Decentralized crypto payments — simple as GPay",
-    url: typeof window !== 'undefined' ? window.location.origin : "https://gattipay-web.vercel.app",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://gattipay-web.vercel.app",
     icons: ["https://gattipay-web.vercel.app/favicon.ico"],
   },
   features: {
