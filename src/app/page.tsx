@@ -8,7 +8,7 @@ declare global {
 }
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
-import { useBalance } from "wagmi";
+import { useBalance, useReadContract } from "wagmi";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -27,11 +27,29 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState("home");
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
-  const { data: bnbBalance } = useBalance({
-    address: address as `0x${string}`,
+ const { data: bnbBalance } = useBalance({
+      address: address as `0x${string}`,
+      chainId: 56,
+    });
+
+    const { data: wHONRaw } = useReadContract({
+      address: "0x0A1Ac7aE511cEcE9493602815A11d1c53b253518",
+    abi: [
+      {
+        name: "balanceOf",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "account", type: "address" }],
+        outputs: [{ name: "", type: "uint256" }],
+      },
+    ],
+    functionName: "balanceOf",
+    args: [address as `0x${string}`],
     chainId: 56,
   });
 
+  const wHONBalance = wHONRaw ? (Number(wHONRaw) / 1e18).toFixed(4) : "0.0000";
+  
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
@@ -121,7 +139,7 @@ export default function Home() {
             BNB {bnbBalance ? parseFloat(String(Number(bnbBalance.value) / 1e18)).toFixed(4) : "0.0000"}
           </span>
           <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
-            wHON 0.0000
+            wHON {wHONBalance}
           </span>
         </div>
       </div>
