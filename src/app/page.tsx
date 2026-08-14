@@ -14,6 +14,7 @@ import ReceivePage from "./receive";
 import ScanPage from "./scan";
 import SwapPage from "./swap";
 import HistoryPage from "./history";
+import ProfilePage from "./profile";
 
 interface Prices {
   eth: number;
@@ -117,6 +118,9 @@ export default function Home() {
 
    if (currentPage === "history") {
     return <HistoryPage onBack={() => setCurrentPage("home")} />;
+  }
+  if (currentPage === "profile") {
+    return <ProfilePage onBack={() => setCurrentPage("home")} />;
   }
 
   return (
@@ -247,7 +251,7 @@ export default function Home() {
           { icon: "⌂", label: "Home", active: currentPage === "home", action: () => setCurrentPage("home") },
           { icon: "◈", label: "Wallet", action: () => open({ view: isConnected ? "Account" : "Connect" }) },
           { icon: "≡", label: "History", action: () => setCurrentPage("history") },
-          { icon: "◯", label: "Profile", action: () => alert("Profile coming soon!") },
+          { icon: "◯", label: "Profile", action: () => setCurrentPage("profile") },
         ].map((item) => (
           <div key={item.label} onClick={() => item.action && item.action()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
             <span style={{ fontSize: 20, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>
