@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetch(
-      `https://api.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc`
+      `https://api.etherscan.io/v2/api?chainid=56&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc`
     );
     const data = await res.json();
     
