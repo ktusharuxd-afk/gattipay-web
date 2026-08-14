@@ -5,7 +5,7 @@ import { createAppKit } from "@reown/appkit/react";
 import { bsc, bscTestnet } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 
 const queryClient = new QueryClient();
 
@@ -32,26 +32,10 @@ createAppKit({
   allowUnsafeAttr: true,
 });
 
-function ModalFix() {
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const modal = document.querySelector("w3m-modal") as HTMLElement;
-      if (modal) {
-        const isOpen = modal.hasAttribute("open");
-        modal.style.pointerEvents = isOpen ? "all" : "none";
-        modal.style.display = isOpen ? "block" : "none";
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
-  return null;
-}
-
 export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <ModalFix />
         {children}
       </QueryClientProvider>
     </WagmiProvider>
