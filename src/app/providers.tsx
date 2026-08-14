@@ -1,7 +1,8 @@
 "use client";
 
-import { wagmiAdapter, projectId, networks } from "./config";
+import { wagmiAdapter, projectId } from "./config";
 import { createAppKit } from "@reown/appkit/react";
+import { bsc, bscTestnet } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { ReactNode, useEffect } from "react";
@@ -11,8 +12,8 @@ const queryClient = new QueryClient();
 createAppKit({
   adapters: [wagmiAdapter],
   projectId,
-  networks,
-  defaultNetwork: networks[0],
+  networks: [bsc, bscTestnet],
+  defaultNetwork: bsc,
   metadata: {
     name: "GattiPay",
     description: "Decentralized crypto payments — simple as GPay",
@@ -32,20 +33,15 @@ createAppKit({
 
 function ModalFix() {
   useEffect(() => {
-    const fix = () => {
-      const modal = document.querySelector("w3m-modal");
+    const interval = setInterval(() => {
+      const modal = document.querySelector("w3m-modal") as HTMLElement;
       if (modal) {
-        const style = document.createElement("style");
-        style.textContent = `
-          w3m-modal:not([open]) {
-            display: none !important;
-            pointer-events: none !important;
-          }
-        `;
-        document.head.appendChild(style);
+        const isOpen = modal.hasAttribute("open");
+        modal.style.pointerEvents = isOpen ? "all" : "none";
+        modal.style.display = isOpen ? "block" : "none";
       }
-    };
-    setTimeout(fix, 1000);
+    }, 100);
+    return () => clearInterval(interval);
   }, []);
   return null;
 }
