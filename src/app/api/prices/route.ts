@@ -2,30 +2,30 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Try CoinGecko first
-    const res = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin&vs_currencies=inr",
-      { 
-        headers: { "Accept": "application/json" },
-        next: { revalidate: 300 } 
-      }
-    );
-    
-    if (res.ok) {
-      const data = await res.json();
-      return NextResponse.json(data);
-    }
-    
-    // Fallback — hardcoded approximate prices
+    // Use Binance public API — no rate limit, no CORS
+    const [ethRes, bnbRes] = await Promise.all([
+      fetch("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"),
+      fetch("https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT"),
+      fetch("https://api.binance.com/api/v3/ticker/price?symbol=USDTINR").catch(() => null),
+    ]);
+
+    const ethData = await ethRes.json();
+    const bnbData = await bnbRes.json();
+
+    // Approximate USD to INR rate
+    const usdToInr = 83.5;
+
+    const ethInr = Math.round(parseFloat(ethData.price) * usdToInr);
+    const bnbInr = Math.round(parseFloat(bnbData.price) * usdToInr);
+
     return NextResponse.json({
-      ethereum: { inr: 178000 },
-      binancecoin: { inr: 58000 }
+      ethereum: { inr: ethInr },
+      binancecoin: { inr: bnbInr },
     });
-    
   } catch {
     return NextResponse.json({
       ethereum: { inr: 178000 },
-      binancecoin: { inr: 58000 }
+      binancecoin: { inr: 58000 },
     });
   }
 }
