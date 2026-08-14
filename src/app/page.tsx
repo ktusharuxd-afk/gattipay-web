@@ -1,4 +1,11 @@
 "use client";
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'appkit-button': { size?: string; label?: string; };
+    }
+  }
+}
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance } from "wagmi";
@@ -93,15 +100,7 @@ export default function Home() {
           <button onClick={toggleTheme} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 14px", color: "var(--text-muted)", fontSize: 12, cursor: "pointer" }}>
             {theme === "light" ? "🌙 Dark" : "☀️ Light"}
           </button>
-          <button 
-            ref={(el) => {
-              if (el) {
-                el.onclick = () => open({ view: isConnected ? "Account" : "Connect" });
-              }
-            }}
-            style={{ fontSize: 12, background: isConnected ? "var(--surface2)" : "var(--accent)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 12px", color: isConnected ? "var(--green)" : "#0d1117", fontWeight: 600, cursor: "pointer" }}>
-            {isConnected ? `● ${shortAddress}` : "Connect Wallet"}
-          </button>
+          <appkit-button size="sm" />
         </div>
       </div>
 
