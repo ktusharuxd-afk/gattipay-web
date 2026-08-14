@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import SendPage from "./send";
 
 interface Prices {
   eth: number;
@@ -12,6 +13,7 @@ export default function Home() {
   const [theme, setTheme] = useState("light");
   const [prices, setPrices] = useState<Prices>({ eth: 0, bnb: 0, whon: 0 });
   const [loadingPrices, setLoadingPrices] = useState(true);
+  const [currentPage, setCurrentPage] = useState("home");
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
 
@@ -50,6 +52,10 @@ export default function Home() {
 
   const formatINR = (n: number) =>
     n > 0 ? `₹${n.toLocaleString("en-IN")}` : "—";
+
+  if (currentPage === "send") {
+    return <SendPage onBack={() => setCurrentPage("home")} />;
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)", position: "relative", zIndex: 1 }}>
@@ -97,12 +103,12 @@ export default function Home() {
       {/* Quick Actions */}
       <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px", position: "relative", zIndex: 10 }}>
         {[
-          { icon: "↑", label: "Send" },
-          { icon: "↓", label: "Receive" },
-          { icon: "⊙", label: "Scan" },
-          { icon: "⇄", label: "Swap" },
+          { icon: "↑", label: "Send", action: () => setCurrentPage("send") },
+          { icon: "↓", label: "Receive", action: () => alert("Receive") },
+          { icon: "⊙", label: "Scan", action: () => alert("Scan") },
+          { icon: "⇄", label: "Swap", action: () => alert("Swap") },
         ].map((action) => (
-          <button key={action.label} onClick={() => alert(action.label)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
+          <button key={action.label} onClick={action.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
             <div style={{ width: 60, height: 60, background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
               {action.icon}
             </div>
