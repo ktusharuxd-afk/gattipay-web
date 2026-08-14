@@ -1,6 +1,7 @@
 "use client";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useEffect, useRef } from "react";
+import QRCode from "qrcode";
 
 interface ReceivePageProps {
   onBack: () => void;
@@ -12,21 +13,15 @@ export default function ReceivePage({ onBack }: ReceivePageProps) {
 
   useEffect(() => {
     if (!address || !canvasRef.current) return;
-    generateQR(address, canvasRef.current);
+    QRCode.toCanvas(canvasRef.current, address, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: "#0d1117",
+        light: "#ffffff",
+      },
+    });
   }, [address]);
-
-  const generateQR = (text: string, canvas: HTMLCanvasElement) => {
-    const size = 200;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = "#0d1117";
-    ctx.font = "10px monospace";
-    ctx.fillText("QR: " + text.slice(0, 20) + "...", 10, 100);
-  };
 
   const copyAddress = () => {
     if (address) {
@@ -48,9 +43,9 @@ export default function ReceivePage({ onBack }: ReceivePageProps) {
       <div style={{ margin: "32px 16px 0", background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 24, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
         <div style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 500 }}>Scan to receive BNB / wHON</div>
 
-        {/* QR Placeholder */}
-        <div style={{ width: 200, height: 200, background: "#ffffff", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--border)", padding: 16 }}>
-          <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />
+        {/* QR Canvas */}
+        <div style={{ background: "#ffffff", borderRadius: 16, padding: 16, border: "2px solid var(--border)" }}>
+          <canvas ref={canvasRef} />
         </div>
 
         {/* Address */}
