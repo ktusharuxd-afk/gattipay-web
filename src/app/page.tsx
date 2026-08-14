@@ -244,10 +244,10 @@ export default function Home() {
       {/* Bottom Nav */}
       <div style={{ display: "flex", justifyContent: "space-around", padding: "16px 0 28px", borderTop: "1.5px solid var(--border)", marginTop: 24, background: "var(--bg)" }}>
         {[
-          { icon: "⌂", label: "Home", active: true },
-          { icon: "◈", label: "Wallet" },
+          { icon: "⌂", label: "Home", active: currentPage === "home", action: () => setCurrentPage("home") },
+          { icon: "◈", label: "Wallet", action: () => open({ view: isConnected ? "Account" : "Connect" }) },
           { icon: "≡", label: "History", action: () => setCurrentPage("history") },
-          { icon: "◯", label: "Profile" },
+          { icon: "◯", label: "Profile", action: () => alert("Profile coming soon!") },
         ].map((item) => (
           <div key={item.label} onClick={() => item.action && item.action()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
             <span style={{ fontSize: 20, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>
