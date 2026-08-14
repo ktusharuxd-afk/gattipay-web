@@ -21,6 +21,8 @@ createAppKit({
   },
   features: {
     analytics: true,
+    email: false,
+    socials: false,
   },
   themeVariables: {
     "--w3m-accent": "#06d6a0",
