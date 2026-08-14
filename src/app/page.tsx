@@ -27,7 +27,13 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState("home");
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("gattipay_txns");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
  const { data: bnbBalance } = useBalance({
       address: address as `0x${string}`,
       chainId: 56,
@@ -75,19 +81,7 @@ export default function Home() {
     const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-    if (!address) return;
-    const fetchTxns = async () => {
-      try {
-        const res = await fetch(`/api/transactions?address=${address}`);
-        const data = await res.json();
-        if (data.result && Array.isArray(data.result)) {
-          setTransactions(data.result.slice(0, 5));
-        }
-      } catch {}
-    };
-    fetchTxns();
-  }, [address]);
+  
 
 
 
@@ -229,7 +223,7 @@ export default function Home() {
                     <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{isSent ? `To ${shortAddr}` : `From ${shortAddr}`}</div>
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: isSent ? "var(--red)" : "var(--green)" }}>
-                    {isSent ? "-" : "+"}{amount} BNB
+                    -{tx.value} BNB
                   </div>
                 </div>
               );

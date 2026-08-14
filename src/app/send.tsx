@@ -37,6 +37,16 @@ export default function SendPage({ onBack }: SendPageProps) {
       });
       setTxHash(tx.hash);
       setStatus("success");
+      const txRecord = {
+        hash: tx.hash,
+        from: address,
+        to: toAddress,
+        value: amount,
+        time: Date.now(),
+      };
+      const existing = JSON.parse(localStorage.getItem("gattipay_txns") || "[]");
+      existing.unshift(txRecord);
+      localStorage.setItem("gattipay_txns", JSON.stringify(existing.slice(0, 10)));
     } catch (e: unknown) {
       setStatus("error");
       if (e instanceof Error) {
