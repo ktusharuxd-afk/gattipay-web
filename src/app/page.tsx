@@ -9,6 +9,7 @@ declare global {
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
+import { ArrowUpRight, ArrowDownLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -22,13 +23,11 @@ interface Prices {
   whon: number;
 }
 
-export default function Home() {
+export default function HomePage() {
   const [theme, setTheme] = useState("light");
   const [prices, setPrices] = useState<Prices>({ eth: 0, bnb: 0, whon: 0 });
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [currentPage, setCurrentPage] = useState("home");
-  const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -36,13 +35,16 @@ export default function Home() {
     }
     return [];
   });
- const { data: bnbBalance } = useBalance({
-      address: address as `0x${string}`,
-      chainId: 56,
-    });
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
 
-    const { data: wHONRaw } = useReadContract({
-      address: "0x0A1Ac7aE511cEcE9493602815A11d1c53b253518",
+  const { data: bnbBalance } = useBalance({
+    address: address as `0x${string}`,
+    chainId: 56,
+  });
+
+  const { data: wHONRaw } = useReadContract({
+    address: "0x0A1Ac7aE511cEcE9493602815A11d1c53b253518",
     abi: [
       {
         name: "balanceOf",
@@ -57,8 +59,8 @@ export default function Home() {
     chainId: 56,
   });
 
-  const wHONBalance = wHONRaw ? (Number(wHONRaw) / 1e18).toFixed(4) : "0.0000";
-  
+  const wHONBalance = wHONRaw ? (Number(wHONRaw) / 1e18).toFixed(2) : "0.00";
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
@@ -83,40 +85,28 @@ export default function Home() {
     const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, []);
-  
 
+  const shortAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null;
+  const bnbVal = bnbBalance ? Number(bnbBalance.value) / 1e18 : 0;
+  const totalINR = prices.bnb > 0 ? bnbVal * prices.bnb : 0;
 
-
-  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
-
-  const shortAddress = address
-    ? `${address.slice(0, 6)}...${address.slice(-4)}`
-    : null;
-
-  const formatINR = (n: number) =>
-    n > 0 ? `₹${n.toLocaleString("en-IN")}` : "—";
-
- if (currentPage === "send") {
+  if (currentPage === "send") {
     return <SendPage onBack={() => {
       const saved = localStorage.getItem("gattipay_txns");
       if (saved) setTransactions(JSON.parse(saved));
       setCurrentPage("home");
     }} />;
   }
-
   if (currentPage === "receive") {
     return <ReceivePage onBack={() => setCurrentPage("home")} />;
   }
-
   if (currentPage === "scan") {
-    return <ScanPage onBack={() => setCurrentPage("home")} onScan={(addr) => { setCurrentPage("send"); }} />;
+    return <ScanPage onBack={() => setCurrentPage("home")} onScan={() => setCurrentPage("send")} />;
   }
-
   if (currentPage === "swap") {
     return <SwapPage onBack={() => setCurrentPage("home")} />;
   }
-
-   if (currentPage === "history") {
+  if (currentPage === "history") {
     return <HistoryPage onBack={() => setCurrentPage("home")} />;
   }
   if (currentPage === "profile") {
@@ -124,140 +114,123 @@ export default function Home() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)", position: "relative", zIndex: 1 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 20px 0" }}>
-        <span style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)", letterSpacing: "-0.5px" }}>GattiPay</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 0" }}>
+        <span style={{ fontSize: 22, fontWeight: 900, color: "var(--accent)", letterSpacing: "-0.5px" }}>GattiPay</span>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button onClick={toggleTheme} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 14px", color: "var(--text-muted)", fontSize: 12, cursor: "pointer" }}>
-            {theme === "light" ? "🌙 Dark" : "☀️ Light"}
+          <button onClick={() => setTheme(theme === "light" ? "dark" : "light")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "6px 12px", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            {theme === "light" ? "🌙" : "☀️"}
           </button>
-          <button 
-            onClick={() => { 
+          <button
+            onClick={() => {
               const modal = document.querySelector('w3m-modal') as HTMLElement;
-              if (modal) {
-                modal.removeAttribute('style');
-              }
+              if (modal) modal.removeAttribute('style');
               open({ view: isConnected ? "Account" : "Connect" });
             }}
-            style={{ fontSize: 12, background: isConnected ? "var(--surface2)" : "var(--accent)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "5px 12px", color: isConnected ? "var(--green)" : "#0d1117", fontWeight: 600, cursor: "pointer" }}>
-            {isConnected ? `● ${shortAddress}` : "Connect Wallet"}
+            style={{ fontSize: 12, background: isConnected ? "var(--surface)" : "var(--accent)", border: "1px solid var(--border)", borderRadius: 12, padding: "6px 14px", color: isConnected ? "var(--green)" : "#0d1117", fontWeight: 700, cursor: "pointer" }}>
+            {isConnected ? `● ${shortAddress}` : "Connect"}
           </button>
         </div>
       </div>
 
       {/* Balance Card */}
-      <div style={{ margin: "24px 16px 0", background: "var(--accent)", borderRadius: 24, padding: "28px 24px" }}>
-        <div style={{ color: "rgba(0,0,0,0.5)", fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Total balance</div>
-        <div style={{ fontSize: 42, fontWeight: 800, color: "#0d1117", marginBottom: 20, letterSpacing: "-1px" }}>
-          {isConnected && bnbBalance && prices.bnb > 0
-            ? `₹${(parseFloat(String(Number(bnbBalance.value) / 1e18)) * prices.bnb).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
-            : "₹0.00"}
+      <div style={{ margin: "16px 16px 0", background: "linear-gradient(135deg, var(--accent) 0%, #04b586 100%)", borderRadius: 20, padding: "24px 20px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }} />
+        <div style={{ color: "rgba(0,0,0,0.45)", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Total balance</div>
+        <div style={{ fontSize: 36, fontWeight: 900, color: "#0d1117", letterSpacing: "-1px", marginBottom: 14 }}>
+          ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
-            BNB {bnbBalance ? parseFloat(String(Number(bnbBalance.value) / 1e18)).toFixed(4) : "0.0000"}
+        <div style={{ display: "flex", gap: 8 }}>
+          <span style={{ fontSize: 11, background: "rgba(0,0,0,0.1)", borderRadius: 8, padding: "4px 10px", color: "#0d1117", fontWeight: 600 }}>
+            BNB {bnbVal.toFixed(4)}
           </span>
-          <span style={{ fontSize: 12, background: "rgba(0,0,0,0.12)", borderRadius: 20, padding: "4px 12px", color: "#0d1117", fontWeight: 500 }}>
+          <span style={{ fontSize: 11, background: "rgba(0,0,0,0.1)", borderRadius: 8, padding: "4px 10px", color: "#0d1117", fontWeight: 600 }}>
             wHON {wHONBalance}
           </span>
         </div>
       </div>
 
-      {/* Connect Prompt */}
-      {!isConnected && (
-        <div style={{ margin: "16px 16px 0", background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "16px 20px", textAlign: "center" }}>
-          <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 10 }}>Connect your wallet to view balances</div>
-          <button onClick={() => open()} style={{ background: "var(--accent)", border: "none", borderRadius: 12, padding: "10px 24px", color: "#0d1117", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
-            Connect Wallet
-          </button>
-        </div>
-      )}
-
       {/* Quick Actions */}
-      <div style={{ display: "flex", justifyContent: "space-around", margin: "28px 16px", position: "relative", zIndex: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "20px 16px 0", gap: 10 }}>
         {[
-          { icon: "↑", label: "Send", action: () => setCurrentPage("send") },
-          { icon: "↓", label: "Receive", action: () => setCurrentPage("receive") },
-          { icon: "⊙", label: "Scan", action: () => setCurrentPage("scan") },
-          { icon: "⇄", label: "Swap", action: () => setCurrentPage("swap") },
-        ].map((action) => (
-          <button key={action.label} onClick={action.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
-            <div style={{ width: 60, height: 60, background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--accent)" }}>
-              {action.icon}
-            </div>
-            <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{action.label}</span>
+          { Icon: ArrowUpRight, label: "Send", action: () => setCurrentPage("send") },
+          { Icon: ArrowDownLeft, label: "Receive", action: () => setCurrentPage("receive") },
+          { Icon: QrCode, label: "Scan", action: () => setCurrentPage("scan") },
+          { Icon: ArrowLeftRight, label: "Swap", action: () => setCurrentPage("swap") },
+        ].map(({ Icon, label, action }) => (
+          <button key={label} onClick={action} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 0" }}>
+            <Icon size={22} color="var(--accent)" strokeWidth={2.5} />
+            <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>{label}</span>
           </button>
         ))}
       </div>
 
       {/* Live Prices */}
-      <div style={{ margin: "0 16px 24px" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 14 }}>Live prices</div>
-        <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
+      <div style={{ padding: "16px 16px 0", flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)", marginBottom: 10, letterSpacing: 0.5 }}>LIVE PRICES</div>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
           {[
-            { label: "Ethereum", symbol: "ETH", price: prices.eth },
-            { label: "BNB", symbol: "BNB", price: prices.bnb },
-            { label: "Wrapped HON", symbol: "wHON", price: prices.whon },
+            { name: "Ethereum", symbol: "ETH", price: prices.eth, dot: "#627EEA" },
+            { name: "BNB", symbol: "BNB", price: prices.bnb, dot: "#F0B90B" },
+            { name: "Wrapped HON", symbol: "wHON", price: prices.whon, dot: "#06d6a0" },
           ].map((coin, i) => (
-            <div key={coin.symbol} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{coin.label}</div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{coin.symbol}</div>
+            <div key={coin.symbol} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: coin.dot }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{coin.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{coin.symbol}</div>
+                </div>
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)" }}>
-                {loadingPrices ? "Loading..." : formatINR(coin.price)}
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>
+                {loadingPrices ? "..." : coin.price > 0 ? `₹${coin.price.toLocaleString("en-IN")}` : "—"}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div style={{ flex: 1, margin: "0 16px" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 14 }}>Recent activity</div>
-        <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
-          {transactions.length === 0 ? (
-            <div style={{ padding: "20px", color: "var(--text-muted)", fontSize: 14, textAlign: "center" }}>
-              No transactions yet
+      {/* Recent Tx Preview */}
+      {transactions.length > 0 && (
+        <div style={{ padding: "8px 16px 0" }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              Last: <span style={{ fontWeight: 700, color: "var(--text)" }}>-{transactions[0].value} BNB</span>
             </div>
-          ) : (
-            transactions.map((tx, i) => {
-              const isSent = tx.from?.toLowerCase() === address?.toLowerCase();
-              const amount = (Number(tx.value) / 1e18).toFixed(4);
-              const shortAddr = isSent
-                ? `${tx.to?.slice(0, 6)}...${tx.to?.slice(-4)}`
-                : `${tx.from?.slice(0, 6)}...${tx.from?.slice(-4)}`;
-              return (
-                <div key={tx.hash || i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: i < transactions.length - 1 ? "1px solid var(--border)" : "none" }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{isSent ? "Sent" : "Received"}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{isSent ? `To ${shortAddr}` : `From ${shortAddr}`}</div>
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: isSent ? "var(--red)" : "var(--green)" }}>
-                    -{tx.value} BNB
-                  </div>
-                </div>
-              );
-            })
-          )}
+            <button onClick={() => setCurrentPage("history")} style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              View all →
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom Nav */}
-      <div style={{ display: "flex", justifyContent: "space-around", padding: "16px 0 28px", borderTop: "1.5px solid var(--border)", marginTop: 24, background: "var(--bg)" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 0 20px", borderTop: "1px solid var(--border)", marginTop: 12, background: "var(--bg)" }}>
         {[
-          { icon: "⌂", label: "Home", active: currentPage === "home", action: () => setCurrentPage("home") },
-          { icon: "◈", label: "Wallet", action: () => open({ view: isConnected ? "Account" : "Connect" }) },
-          { icon: "≡", label: "History", action: () => setCurrentPage("history") },
-          { icon: "◯", label: "Profile", action: () => setCurrentPage("profile") },
-        ].map((item) => (
-          <div key={item.label} onClick={() => item.action && item.action()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
-            <span style={{ fontSize: 20, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>
-            <span style={{ fontSize: 11, fontWeight: item.active ? 600 : 400, color: item.active ? "var(--accent)" : "var(--text-muted)" }}>{item.label}</span>
-          </div>
-        ))}
+          { Icon: Home, label: "Home", page: "home" },
+          { Icon: Wallet, label: "Wallet", page: "wallet" },
+          { Icon: Clock, label: "History", page: "history" },
+          { Icon: User, label: "Profile", page: "profile" },
+        ].map(({ Icon, label, page }) => {
+          const isActive = currentPage === page;
+          return (
+            <button key={label} onClick={() => {
+              if (page === "wallet") {
+                const modal = document.querySelector('w3m-modal') as HTMLElement;
+                if (modal) modal.removeAttribute('style');
+                open({ view: isConnected ? "Account" : "Connect" });
+              } else {
+                setCurrentPage(page);
+              }
+            }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: "pointer", background: "none", border: "none", padding: "4px 16px" }}>
+              <Icon size={20} color={isActive ? "var(--accent)" : "var(--text-muted)"} strokeWidth={isActive ? 2.5 : 1.5} />
+              <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500, color: isActive ? "var(--accent)" : "var(--text-muted)" }}>{label}</span>
+            </button>
+          );
+        })}
       </div>
 
     </div>
