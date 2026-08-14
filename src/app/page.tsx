@@ -27,6 +27,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState("home");
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
+  const [transactions, setTransactions] = useState<any[]>([]);
  const { data: bnbBalance } = useBalance({
       address: address as `0x${string}`,
       chainId: 56,
@@ -74,6 +75,19 @@ export default function Home() {
     const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, []);
+  useEffect(() => {
+    if (!address) return;
+    const fetchTxns = async () => {
+      try {
+        const res = await fetch(`/api/transactions?address=${address}`);
+        const data = await res.json();
+        if (data.result && Array.isArray(data.result)) {
+          setTransactions(data.result.slice(0, 5));
+        }
+      } catch {}
+    };
+    fetchTxns();
+  }, [address]);
 
 
 
@@ -196,8 +210,31 @@ export default function Home() {
       {/* Recent Activity */}
       <div style={{ flex: 1, margin: "0 16px" }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 14 }}>Recent activity</div>
-        <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "20px", color: "var(--text-muted)", fontSize: 14, textAlign: "center" }}>
-          No transactions yet
+        <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
+          {transactions.length === 0 ? (
+            <div style={{ padding: "20px", color: "var(--text-muted)", fontSize: 14, textAlign: "center" }}>
+              No transactions yet
+            </div>
+          ) : (
+            transactions.map((tx, i) => {
+              const isSent = tx.from?.toLowerCase() === address?.toLowerCase();
+              const amount = (Number(tx.value) / 1e18).toFixed(4);
+              const shortAddr = isSent
+                ? `${tx.to?.slice(0, 6)}...${tx.to?.slice(-4)}`
+                : `${tx.from?.slice(0, 6)}...${tx.from?.slice(-4)}`;
+              return (
+                <div key={tx.hash || i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: i < transactions.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{isSent ? "Sent" : "Received"}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{isSent ? `To ${shortAddr}` : `From ${shortAddr}`}</div>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isSent ? "var(--red)" : "var(--green)" }}>
+                    {isSent ? "-" : "+"}{amount} BNB
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
