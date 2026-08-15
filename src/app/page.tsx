@@ -109,7 +109,9 @@ export default function HomePage() {
         <div style={{ position: "relative" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
             <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
-            <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 700, background: "var(--accent-dim)", padding: "2px 8px", borderRadius: 6 }}>+0.00%</div>
+            <button onClick={openModal} style={{ fontSize: 10, fontWeight: 700, padding: "5px 14px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s" }}>
+              {isConnected ? `● ${shortAddr}` : "Connect Wallet"}
+            </button>
           </div>
           <div style={{ fontSize: 34, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 12 }}>
             ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
