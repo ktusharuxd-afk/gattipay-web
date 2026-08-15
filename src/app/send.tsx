@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { BrowserProvider, parseEther, isAddress } from "ethers";
 import type { Eip1193Provider } from "ethers";
+import { ArrowLeft, ArrowUpRight, CheckCircle, XCircle, Copy } from "lucide-react";
 
 interface SendPageProps {
   onBack: () => void;
@@ -11,7 +12,6 @@ interface SendPageProps {
 export default function SendPage({ onBack }: SendPageProps) {
   const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
-
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -20,109 +20,97 @@ export default function SendPage({ onBack }: SendPageProps) {
 
   const isValidAddress = isAddress(toAddress);
   const isValidAmount = parseFloat(amount) > 0;
+  const canSend = isValidAddress && isValidAmount && status !== "loading";
 
   const handleSend = async () => {
-    if (!isConnected || !walletProvider) return;
-    if (!isValidAddress || !isValidAmount) return;
-
+    if (!isConnected || !walletProvider || !canSend) return;
     setStatus("loading");
     setErrorMsg("");
-
     try {
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
-      const tx = await signer.sendTransaction({
-        to: toAddress,
-        value: parseEther(amount),
-      });
+      const tx = await signer.sendTransaction({ to: toAddress, value: parseEther(amount) });
       setTxHash(tx.hash);
       setStatus("success");
-      const txRecord = {
-        hash: tx.hash,
-        from: address,
-        to: toAddress,
-        value: amount,
-        time: Date.now(),
-      };
+      const txRecord = { hash: tx.hash, from: address, to: toAddress, value: amount, time: Date.now() };
       const existing = JSON.parse(localStorage.getItem("gattipay_txns") || "[]");
       existing.unshift(txRecord);
       localStorage.setItem("gattipay_txns", JSON.stringify(existing.slice(0, 10)));
     } catch (e: unknown) {
       setStatus("error");
-      if (e instanceof Error) {
-        setErrorMsg(e.message.slice(0, 100));
-      }
+      if (e instanceof Error) setErrorMsg(e.message.slice(0, 100));
     }
   };
 
+  const pasteAddress = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.startsWith("0x")) setToAddress(text);
+    } catch {}
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--bg)" }}>
-
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "24px 20px 0" }}>
-        <button onClick={onBack} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 12, padding: "6px 14px", color: "var(--text-muted)", fontSize: 16, cursor: "pointer" }}>←</button>
-        <span style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>Send</span>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
+        <button onClick={onBack} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
+          <ArrowLeft size={18} color="var(--text-secondary)" />
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ArrowUpRight size={14} color="var(--accent)" strokeWidth={2.5} />
+          </div>
+          <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Send</span>
+        </div>
       </div>
-
-      {/* From */}
-      <div style={{ margin: "24px 16px 0", background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "16px 20px" }}>
-        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>From</div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{address ? `${address.slice(0, 10)}...${address.slice(-6)}` : "—"}</div>
+      <div style={{ margin: "0 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px" }}>
+        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>From</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "monospace" }}>
+          {address ? address.slice(0, 14) + "..." + address.slice(-8) : "Not connected"}
+        </div>
       </div>
-
-      {/* To Address */}
       <div style={{ margin: "12px 16px 0" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8 }}>To address</div>
-        <input
-          value={toAddress}
-          onChange={(e) => setToAddress(e.target.value)}
-          placeholder="0x..."
-          style={{ width: "100%", background: "var(--surface)", border: `1.5px solid ${toAddress && !isValidAddress ? "var(--red)" : "var(--border)"}`, borderRadius: 14, padding: "14px 16px", fontSize: 14, color: "var(--text)", outline: "none" }}
-        />
-        {toAddress && !isValidAddress && (
-          <div style={{ fontSize: 12, color: "var(--red)", marginTop: 4 }}>Invalid address</div>
-        )}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 1, textTransform: "uppercase" }}>To Address</div>
+          <button onClick={pasteAddress} style={{ background: "var(--accent-dim)", border: "none", borderRadius: 8, padding: "3px 10px", fontSize: 10, fontWeight: 700, color: "var(--accent)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            <Copy size={10} /> Paste
+          </button>
+        </div>
+        <input value={toAddress} onChange={(e) => setToAddress(e.target.value)} placeholder="0x..." style={{ width: "100%", background: "var(--surface)", border: "1px solid " + (toAddress && !isValidAddress ? "var(--red)" : "var(--border)"), borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "var(--text)", outline: "none", fontFamily: "monospace" }} />
+        {toAddress && !isValidAddress && <div style={{ fontSize: 10, color: "var(--red)", marginTop: 4, fontWeight: 700 }}>Invalid address</div>}
       </div>
-
-      {/* Amount */}
       <div style={{ margin: "12px 16px 0" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)", marginBottom: 8 }}>Amount (BNB)</div>
-        <input
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
-          type="number"
-          style={{ width: "100%", background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 16px", fontSize: 20, fontWeight: 700, color: "var(--text)", outline: "none" }}
-        />
+        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Amount (BNB)</div>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F0B90B", flexShrink: 0 }} />
+          <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" type="number" style={{ flex: 1, background: "none", border: "none", fontSize: 28, fontWeight: 900, color: "var(--text)", outline: "none", letterSpacing: "-1px", width: "100%" }} />
+          <span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 700 }}>BNB</span>
+        </div>
       </div>
-
-      {/* Send Button */}
-      <div style={{ margin: "24px 16px 0" }}>
-        <button
-          onClick={handleSend}
-          disabled={!isValidAddress || !isValidAmount || status === "loading"}
-          style={{ width: "100%", background: isValidAddress && isValidAmount ? "var(--accent)" : "var(--border)", border: "none", borderRadius: 16, padding: "16px", fontSize: 16, fontWeight: 700, color: isValidAddress && isValidAmount ? "#0d1117" : "var(--text-muted)", cursor: isValidAddress && isValidAmount ? "pointer" : "not-allowed" }}
-        >
-          {status === "loading" ? "Sending..." : "Send"}
+      <div style={{ flex: 1 }} />
+      <div style={{ padding: "0 16px 20px" }}>
+        <button onClick={handleSend} disabled={!canSend} style={{ width: "100%", background: canSend ? "var(--accent)" : "var(--surface3)", border: "none", borderRadius: 16, padding: "16px", fontSize: 15, fontWeight: 800, color: canSend ? "#0a0e14" : "var(--text-muted)", cursor: canSend ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: canSend ? "0 0 24px var(--accent-glow)" : "none" }}>
+          {status === "loading" ? "Confirming..." : "Send BNB"}
         </button>
       </div>
-
-      {/* Success */}
       {status === "success" && (
-        <div style={{ margin: "16px 16px 0", background: "#d1fae5", border: "1.5px solid var(--green)", borderRadius: 16, padding: "16px 20px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#065f46", marginBottom: 4 }}>✅ Transaction sent!</div>
-          <div style={{ fontSize: 11, color: "#065f46", wordBreak: "break-all" }}>Tx: {txHash}</div>
+        <div style={{ margin: "0 16px 16px", background: "var(--surface)", border: "1px solid var(--green)", borderRadius: 16, padding: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <CheckCircle size={16} color="var(--green)" />
+            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--green)" }}>Transaction sent!</span>
+          </div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", wordBreak: "break-all", fontFamily: "monospace", marginBottom: 8 }}>{txHash}</div>
+          <a href={"https://bscscan.com/tx/" + txHash} target="_blank" style={{ fontSize: 11, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>View on BSCScan</a>
         </div>
       )}
-
-      {/* Error */}
       {status === "error" && (
-        <div style={{ margin: "16px 16px 0", background: "#fee2e2", border: "1.5px solid var(--red)", borderRadius: 16, padding: "16px 20px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#991b1b", marginBottom: 4 }}>❌ Transaction failed</div>
-          <div style={{ fontSize: 12, color: "#991b1b" }}>{errorMsg}</div>
+        <div style={{ margin: "0 16px 16px", background: "var(--surface)", border: "1px solid var(--red)", borderRadius: 16, padding: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <XCircle size={16} color="var(--red)" />
+            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--red)" }}>Failed</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{errorMsg}</div>
         </div>
       )}
-
     </div>
   );
 }
