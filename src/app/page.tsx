@@ -9,7 +9,7 @@ declare global {
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
-import { ArrowUpRight, ArrowDownLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, Bell, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, Bell, ChevronRight, ChevronDown } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -72,60 +72,63 @@ export default function HomePage() {
   const bnbVal = bnbBalance ? Number(bnbBalance.value) / 1e18 : 0;
   const totalINR = prices.bnb > 0 ? bnbVal * prices.bnb : 0;
   const shortAddr = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
-  const pctChange = "+0.00%";
 
-  if (currentPage === "send") return <SendPage onBack={() => { const s = localStorage.getItem("gattipay_txns"); if (s) setTransactions(JSON.parse(s)); setCurrentPage("home"); }} />;
-  if (currentPage === "receive") return <ReceivePage onBack={() => setCurrentPage("home")} />;
-  if (currentPage === "scan") return <ScanPage onBack={() => setCurrentPage("home")} onScan={() => setCurrentPage("send")} />;
-  if (currentPage === "swap") return <SwapPage onBack={() => setCurrentPage("home")} />;
-  if (currentPage === "history") return <HistoryPage onBack={() => setCurrentPage("home")} />;
-  if (currentPage === "profile") return <ProfilePage onBack={() => setCurrentPage("home")} />;
+  const openModal = () => {
+    const m = document.querySelector('w3m-modal') as HTMLElement;
+    if (m) m.removeAttribute('style');
+    open({ view: isConnected ? "Account" : "Connect" });
+  };
+
+  if (currentPage === "send") return <div className="page-enter"><SendPage onBack={() => { const s = localStorage.getItem("gattipay_txns"); if (s) setTransactions(JSON.parse(s)); setCurrentPage("home"); }} /></div>;
+  if (currentPage === "receive") return <div className="page-enter"><ReceivePage onBack={() => setCurrentPage("home")} /></div>;
+  if (currentPage === "scan") return <div className="page-enter"><ScanPage onBack={() => setCurrentPage("home")} onScan={() => setCurrentPage("send")} /></div>;
+  if (currentPage === "swap") return <div className="page-enter"><SwapPage onBack={() => setCurrentPage("home")} /></div>;
+  if (currentPage === "history") return <div className="page-enter"><HistoryPage onBack={() => setCurrentPage("home")} /></div>;
+  if (currentPage === "profile") return <div className="page-enter"><ProfilePage onBack={() => setCurrentPage("home")} /></div>;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+    <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 0" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 16, fontWeight: 900, color: "var(--accent)" }}>G</span>
+        <button onClick={openModal} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--surface3)", border: "1.5px solid var(--border-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <User size={17} color="var(--text-secondary)" />
           </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>GattiPay</div>
-            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{isConnected ? shortAddr : "Not connected"}</div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: 3 }}>
+              {isConnected ? shortAddr : "Connect Wallet"}
+              <ChevronDown size={13} color="var(--text-muted)" />
+            </div>
+            <div style={{ fontSize: 10, color: isConnected ? "var(--accent)" : "var(--text-muted)", fontWeight: 600 }}>
+              {isConnected ? "● BNB Smart Chain" : "Not connected"}
+            </div>
           </div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex", position: "relative" }}>
-            <Bell size={18} color="var(--text-secondary)" />
-            <div style={{ position: "absolute", top: 6, right: 6, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />
-          </button>
-          <button
-            onClick={() => { const m = document.querySelector('w3m-modal') as HTMLElement; if (m) m.removeAttribute('style'); open({ view: isConnected ? "Account" : "Connect" }); }}
-            style={{ background: isConnected ? "var(--accent-dim)" : "var(--accent)", border: "none", borderRadius: 12, padding: "8px 14px", fontSize: 12, fontWeight: 700, color: isConnected ? "var(--accent)" : "#0a0e14", cursor: "pointer" }}>
-            {isConnected ? "● Connected" : "Connect"}
-          </button>
-        </div>
+        </button>
+        <button style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "9px", cursor: "pointer", display: "flex", position: "relative" }}>
+          <Bell size={17} color="var(--text-secondary)" />
+          {transactions.length > 0 && <div style={{ position: "absolute", top: 7, right: 7, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />}
+        </button>
       </div>
 
       {/* Balance Card */}
-      <div style={{ margin: "16px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "22px 20px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(60px)" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>My Balance</div>
-          <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700 }}>{pctChange}</div>
+      <div style={{ margin: "16px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "20px 20px 18px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, position: "relative" }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
+          <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, background: "var(--accent-dim)", padding: "2px 8px", borderRadius: 6 }}>+0.00%</div>
         </div>
-        <div style={{ fontSize: 38, fontWeight: 900, color: "var(--text)", letterSpacing: "-2px", marginBottom: 16, position: "relative" }}>
+        <div style={{ fontSize: 36, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 18, position: "relative" }}>
           ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ background: "var(--surface3)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F0B90B" }} />
-            <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 600 }}>BNB {bnbVal.toFixed(4)}</span>
+        <div style={{ display: "flex", gap: 8, position: "relative", flexWrap: "wrap" }}>
+          <div style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "7px 12px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F0B90B", flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, whiteSpace: "nowrap" }}>BNB {bnbVal.toFixed(4)}</span>
           </div>
-          <div style={{ background: "var(--surface3)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} />
-            <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 600 }}>wHON {wHONBalance}</span>
+          <div style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "7px 12px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, whiteSpace: "nowrap" }}>wHON {wHONBalance}</span>
           </div>
         </div>
       </div>
@@ -133,14 +136,14 @@ export default function HomePage() {
       {/* Quick Actions */}
       <div style={{ display: "flex", gap: 10, padding: "16px 16px 0" }}>
         {[
-          { Icon: ArrowUpRight, label: "Send", page: "send", color: "var(--accent)" },
-          { Icon: ArrowDownLeft, label: "Receive", page: "receive", color: "var(--accent)" },
-          { Icon: QrCode, label: "Scan", page: "scan", color: "var(--accent)" },
-          { Icon: ArrowLeftRight, label: "Swap", page: "swap", color: "var(--accent)" },
-        ].map(({ Icon, label, page, color }) => (
-          <button key={label} onClick={() => setCurrentPage(page)} style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
-            <div style={{ width: 42, height: 42, background: "var(--accent-dim)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon size={20} color={color} strokeWidth={2.5} />
+          { Icon: ArrowUpRight, label: "Send", page: "send" },
+          { Icon: ArrowDownLeft, label: "Receive", page: "receive" },
+          { Icon: QrCode, label: "Scan", page: "scan" },
+          { Icon: ArrowLeftRight, label: "Swap", page: "swap" },
+        ].map(({ Icon, label, page }) => (
+          <button key={label} onClick={() => setCurrentPage(page)} style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "transform 0.15s, border-color 0.15s" }}>
+            <div style={{ width: 40, height: 40, background: "var(--accent-dim)", borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon size={19} color="var(--accent)" strokeWidth={2.5} />
             </div>
             <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 600 }}>{label}</span>
           </button>
@@ -148,10 +151,8 @@ export default function HomePage() {
       </div>
 
       {/* Live Prices */}
-      <div style={{ padding: "16px 16px 0", flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-secondary)", letterSpacing: 0.5 }}>LIVE PRICES</span>
-        </div>
+      <div style={{ padding: "16px 16px 0", flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", letterSpacing: 0.8, marginBottom: 10 }}>LIVE PRICES</div>
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
           {[
             { name: "Ethereum", symbol: "ETH", price: prices.eth, color: "#627EEA" },
@@ -160,7 +161,7 @@ export default function HomePage() {
           ].map((coin, i) => (
             <div key={coin.symbol} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 10, background: `${coin.color}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 30, height: 30, borderRadius: 9, background: `${coin.color}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: coin.color }} />
                 </div>
                 <div>
@@ -178,24 +179,24 @@ export default function HomePage() {
 
       {/* Recent Transaction */}
       {transactions.length > 0 && (
-        <div style={{ padding: "8px 16px 0" }}>
-          <button onClick={() => setCurrentPage("history")} style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+        <div style={{ padding: "10px 16px 0" }}>
+          <button onClick={() => setCurrentPage("history")} style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(244,63,94,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ArrowUpRight size={14} color="var(--red)" />
+              <div style={{ width: 26, height: 26, borderRadius: 8, background: "rgba(244,63,94,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ArrowUpRight size={13} color="var(--red)" />
               </div>
               <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>-{transactions[0].value} BNB</div>
-                <div style={{ fontSize: 10, color: "var(--text-muted)" }}>To {transactions[0].to?.slice(0, 6)}...{transactions[0].to?.slice(-4)}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>-{transactions[0].value} BNB</div>
+                <div style={{ fontSize: 9, color: "var(--text-muted)" }}>To {transactions[0].to?.slice(0, 6)}...{transactions[0].to?.slice(-4)}</div>
               </div>
             </div>
-            <ChevronRight size={16} color="var(--text-muted)" />
+            <ChevronRight size={15} color="var(--text-muted)" />
           </button>
         </div>
       )}
 
       {/* Bottom Nav */}
-      <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 0 20px", borderTop: "1px solid var(--border)", marginTop: 12, background: "var(--bg)" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", padding: "10px 0 18px", borderTop: "1px solid var(--border)", marginTop: 10, background: "var(--bg)" }}>
         {[
           { Icon: Home, label: "Home", page: "home" },
           { Icon: Wallet, label: "Wallet", page: "wallet" },
@@ -204,13 +205,7 @@ export default function HomePage() {
         ].map(({ Icon, label, page }) => {
           const isActive = currentPage === page;
           return (
-            <button key={label} onClick={() => {
-              if (page === "wallet") {
-                const m = document.querySelector('w3m-modal') as HTMLElement;
-                if (m) m.removeAttribute('style');
-                open({ view: isConnected ? "Account" : "Connect" });
-              } else setCurrentPage(page);
-            }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: "pointer", background: "none", border: "none", padding: "4px 16px" }}>
+            <button key={label} onClick={() => { if (page === "wallet") openModal(); else setCurrentPage(page); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", background: "none", border: "none", padding: "4px 16px" }}>
               <Icon size={20} color={isActive ? "var(--accent)" : "var(--text-muted)"} strokeWidth={isActive ? 2.5 : 1.5} />
               <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500, color: isActive ? "var(--accent)" : "var(--text-muted)" }}>{label}</span>
             </button>
