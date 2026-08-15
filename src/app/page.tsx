@@ -9,7 +9,7 @@ declare global {
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
-import { ArrowUpRight, ArrowDownLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -122,51 +122,74 @@ export default function HomePage() {
         <div style={{ padding: "14px 20px", fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Wallet</div>
         
         <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
-          {/* Balance Overview */}
-          <div style={{ background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 20, padding: "20px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
-            <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6, position: "relative" }}>Portfolio Value</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 16, position: "relative" }}>
-              ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+          {!isConnected ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 20 }}>
+              <div style={{ width: 80, height: 80, borderRadius: 24, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Wallet size={36} color="var(--accent)" strokeWidth={1.5} />
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--text)" }}>Connect Your Wallet</div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", maxWidth: 260, lineHeight: 1.7 }}>Connect MetaMask, Trust Wallet or any of 380+ wallets to get started.</div>
+              <button onClick={openModal} style={{ background: "var(--accent)", border: "none", borderRadius: 16, padding: "16px 48px", fontSize: 15, fontWeight: 800, color: "#0a0e14", cursor: "pointer", boxShadow: "0 0 30px var(--accent-glow)" }}>
+                Connect Wallet
+              </button>
             </div>
-            <button onClick={openModal} style={{ background: "var(--accent)", border: "none", borderRadius: 12, padding: "10px 20px", fontSize: 12, fontWeight: 800, color: "#0a0e14", cursor: "pointer", boxShadow: "0 0 20px var(--accent-glow)", position: "relative" }}>
-              {isConnected ? "Manage Wallet" : "Connect Wallet"}
-            </button>
-          </div>
-
-          {/* Assets */}
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginBottom: 10 }}>YOUR ASSETS</div>
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
-            {[
-              { name: "BNB", balance: bnbVal.toFixed(4), value: prices.bnb > 0 ? `₹${(bnbVal * prices.bnb).toFixed(2)}` : "—", color: "#F0B90B" },
-              { name: "wHON", balance: wHONBalance, value: "—", color: "var(--accent)" },
-            ].map((asset, i) => (
-              <div key={asset.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: i === 0 ? "1px solid var(--border)" : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 12, background: `${asset.color}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: asset.color }} />
-                  </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Connected Wallet */}
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 4 }}>CONNECTED WALLET</div>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 32, height: 32 }} />
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{asset.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{asset.balance}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>MetaMask</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace" }}>{shortAddr}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{asset.value}</div>
+                <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 700, background: "var(--accent-dim)", padding: "4px 10px", borderRadius: 8 }}>● Connected</div>
               </div>
-            ))}
-          </div>
 
-          {/* Network Info */}
-          <div style={{ marginTop: 14, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Network</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>● BNB Smart Chain</div>
-          </div>
+              {/* Network */}
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>Network</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F0B90B" }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>BNB Smart Chain</span>
+                </div>
+              </div>
+
+              {/* Add Another Wallet */}
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 8 }}>ADD WALLET</div>
+              <button onClick={openModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Wallet size={20} color="var(--accent)" />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Connect Another Wallet</span>
+              </button>
+
+              {/* GattiPay Wallet (Coming Soon) */}
+              <button style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", opacity: 0.6 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: "var(--accent)" }}>G</span>
+                </div>
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Coming Soon</div>
+                </div>
+              </button>
+
+              {/* Manage */}
+              <button onClick={openModal} style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "14px", fontSize: 13, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", textAlign: "center", marginTop: 4 }}>
+                Manage Wallet Settings
+              </button>
+            </div>
+          )}
         </div>
 
         {bottomNav}
       </div>
     );
   }
+    
 
   // History page (with nav)
   if (currentPage === "history") {
@@ -198,22 +221,26 @@ export default function HomePage() {
     <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px 0" }}>
-        <button onClick={openModal} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--surface3)", border: "1.5px solid var(--border-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <User size={16} color="var(--text-secondary)" />
-          </div>
-          <div style={{ textAlign: "left" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: 3 }}>
-              {isConnected ? shortAddr : "Connect Wallet"}
-              <ChevronDown size={12} color="var(--text-muted)" />
+     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px 0" }}>
+          <button onClick={openModal} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--surface3)", border: "1.5px solid var(--border-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <User size={16} color="var(--text-secondary)" />
             </div>
-            <div style={{ fontSize: 10, color: isConnected ? "var(--accent)" : "var(--text-muted)", fontWeight: 600 }}>
-              {isConnected ? "● BNB Smart Chain" : "Tap to connect"}
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: 3 }}>
+                {isConnected ? shortAddr : "Connect Wallet"}
+                <ChevronDown size={12} color="var(--text-muted)" />
+              </div>
+              <div style={{ fontSize: 10, color: isConnected ? "var(--accent)" : "var(--text-muted)", fontWeight: 600 }}>
+                {isConnected ? "● BNB Smart Chain" : "Tap to connect"}
+              </div>
             </div>
-          </div>
-        </button>
-      </div>
+          </button>
+          <button onClick={() => goTo("history")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "9px", cursor: "pointer", display: "flex", position: "relative" }}>
+            <Bell size={17} color="var(--text-secondary)" />
+            {transactions.length > 0 && <div style={{ position: "absolute", top: 6, right: 6, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />}
+          </button>
+        </div>
 
       {/* Balance Card */}
       <div style={{ margin: "14px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "20px", position: "relative", overflow: "hidden" }}>

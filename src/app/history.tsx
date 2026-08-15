@@ -31,17 +31,7 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
-        <button onClick={onBack} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
-          <ArrowLeft size={18} color="var(--text-secondary)" />
-        </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Clock size={14} color="var(--accent)" strokeWidth={2.5} />
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>History</span>
-        </div>
-      </div>
+     
 
       {/* Content */}
       <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
