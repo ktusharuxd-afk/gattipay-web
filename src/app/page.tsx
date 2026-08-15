@@ -22,14 +22,13 @@ interface Prices { eth: number; bnb: number; whon: number; }
 
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !localStorage.getItem("gattipay_onboarded");
-    }
+    if (typeof window !== "undefined") return !localStorage.getItem("gattipay_onboarded");
     return false;
   });
   const [prices, setPrices] = useState<Prices>({ eth: 0, bnb: 0, whon: 0 });
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [currentPage, setCurrentPage] = useState("home");
+  const [prevPage, setPrevPage] = useState("home");
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -72,14 +71,129 @@ export default function HomePage() {
     open({ view: isConnected ? "Account" : "Connect" });
   };
 
-  if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
-  if (currentPage === "send") return <div className="page-enter"><SendPage onBack={() => { const s = localStorage.getItem("gattipay_txns"); if (s) setTransactions(JSON.parse(s)); setCurrentPage("home"); }} /></div>;
-  if (currentPage === "receive") return <div className="page-enter"><ReceivePage onBack={() => setCurrentPage("home")} /></div>;
-  if (currentPage === "scan") return <div className="page-enter"><ScanPage onBack={() => setCurrentPage("home")} onScan={() => setCurrentPage("send")} /></div>;
-  if (currentPage === "swap") return <div className="page-enter"><SwapPage onBack={() => setCurrentPage("home")} /></div>;
-  if (currentPage === "history") return <div className="page-enter"><HistoryPage onBack={() => setCurrentPage("home")} /></div>;
-  if (currentPage === "profile") return <div className="page-enter"><ProfilePage onBack={() => setCurrentPage("home")} /></div>;
+  const goTo = (page: string) => {
+    setPrevPage(currentPage);
+    if (page === "home") {
+      const s = localStorage.getItem("gattipay_txns");
+      if (s) setTransactions(JSON.parse(s));
+    }
+    setCurrentPage(page);
+  };
 
+  if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
+
+  // Full-screen pages (Send, Receive, Scan, Swap)
+  if (currentPage === "send") return <div className="page-enter"><SendPage onBack={() => goTo("home")} /></div>;
+  if (currentPage === "receive") return <div className="page-enter"><ReceivePage onBack={() => goTo("home")} /></div>;
+  if (currentPage === "scan") return <div className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
+  if (currentPage === "swap") return <div className="page-enter"><SwapPage onBack={() => goTo("home")} /></div>;
+
+  // Bottom nav
+  const bottomNav = (
+    <div style={{ padding: "0 20px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", padding: "10px 0", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20 }}>
+        {[
+          { Icon: Home, label: "Home", page: "home" },
+          { Icon: Wallet, label: "Wallet", page: "wallet" },
+          { Icon: Clock, label: "History", page: "history" },
+          { Icon: User, label: "Profile", page: "profile" },
+        ].map(({ Icon, label, page }) => {
+          const isActive = currentPage === page;
+          return (
+            <button key={label} onClick={() => goTo(page)} style={{
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+              cursor: "pointer", background: isActive ? "var(--accent)" : "none",
+              border: "none", padding: "8px 16px",
+              borderRadius: isActive ? 14 : 0, transition: "all 0.25s ease"
+            }}>
+              <Icon size={19} color={isActive ? "#0a0e14" : "var(--text-muted)"} strokeWidth={isActive ? 2.5 : 1.5} />
+              <span style={{ fontSize: 9, fontWeight: isActive ? 800 : 500, color: isActive ? "#0a0e14" : "var(--text-muted)" }}>{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Wallet page
+  if (currentPage === "wallet") {
+    return (
+      <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+        <div style={{ padding: "14px 20px", fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Wallet</div>
+        
+        <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
+          {/* Balance Overview */}
+          <div style={{ background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 20, padding: "20px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
+            <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6, position: "relative" }}>Portfolio Value</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 16, position: "relative" }}>
+              ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+            </div>
+            <button onClick={openModal} style={{ background: "var(--accent)", border: "none", borderRadius: 12, padding: "10px 20px", fontSize: 12, fontWeight: 800, color: "#0a0e14", cursor: "pointer", boxShadow: "0 0 20px var(--accent-glow)", position: "relative" }}>
+              {isConnected ? "Manage Wallet" : "Connect Wallet"}
+            </button>
+          </div>
+
+          {/* Assets */}
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginBottom: 10 }}>YOUR ASSETS</div>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
+            {[
+              { name: "BNB", balance: bnbVal.toFixed(4), value: prices.bnb > 0 ? `₹${(bnbVal * prices.bnb).toFixed(2)}` : "—", color: "#F0B90B" },
+              { name: "wHON", balance: wHONBalance, value: "—", color: "var(--accent)" },
+            ].map((asset, i) => (
+              <div key={asset.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: i === 0 ? "1px solid var(--border)" : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 12, background: `${asset.color}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: asset.color }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{asset.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{asset.balance}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{asset.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Network Info */}
+          <div style={{ marginTop: 14, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Network</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>● BNB Smart Chain</div>
+          </div>
+        </div>
+
+        {bottomNav}
+      </div>
+    );
+  }
+
+  // History page (with nav)
+  if (currentPage === "history") {
+    return (
+      <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+        <div style={{ padding: "14px 20px", fontSize: 17, fontWeight: 800, color: "var(--text)" }}>History</div>
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <HistoryPage onBack={() => goTo("home")} />
+        </div>
+        {bottomNav}
+      </div>
+    );
+  }
+
+  // Profile page (with nav)
+  if (currentPage === "profile") {
+    return (
+      <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <ProfilePage onBack={() => goTo("home")} />
+        </div>
+        {bottomNav}
+      </div>
+    );
+  }
+
+  // Home page
   return (
     <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
@@ -101,38 +215,33 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* Balance + Actions Card */}
+      {/* Balance Card */}
       <div style={{ margin: "14px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "20px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
-        
-        {/* Balance */}
-        <div style={{ position: "relative" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
-            <button onClick={openModal} style={{ fontSize: 10, fontWeight: 700, padding: "5px 14px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 6 }}>
-              {isConnected ? (
-                <>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 14, height: 14 }} />
-                  {shortAddr}
-                </>
-              ) : "Connect Wallet"}
-            </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, position: "relative" }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
+          <button onClick={openModal} style={{ fontSize: 10, fontWeight: 700, padding: "5px 14px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 6 }}>
+            {isConnected ? (
+              <>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 14, height: 14 }} />
+                {shortAddr}
+              </>
+            ) : "Connect Wallet"}
+          </button>
+        </div>
+        <div style={{ fontSize: 34, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 12, position: "relative" }}>
+          ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+        </div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 18, position: "relative", flexWrap: "wrap" }}>
+          <div style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F0B90B", flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 700 }}>BNB {bnbVal.toFixed(4)}</span>
           </div>
-          <div style={{ fontSize: 34, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 12 }}>
-            ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-          </div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-            <div style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F0B90B", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 700 }}>BNB {bnbVal.toFixed(4)}</span>
-            </div>
-            <div style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 700 }}>wHON {wHONBalance}</span>
-            </div>
+          <div style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 700 }}>wHON {wHONBalance}</span>
           </div>
         </div>
-
         {/* Integrated Actions */}
         <div style={{ display: "flex", gap: 8, position: "relative" }}>
           {[
@@ -141,12 +250,7 @@ export default function HomePage() {
             { Icon: QrCode, label: "Scan", page: "scan" },
             { Icon: ArrowLeftRight, label: "Swap", page: "swap" },
           ].map(({ Icon, label, page }) => (
-            <button key={label} onClick={() => setCurrentPage(page)} style={{
-              flex: 1, background: "var(--surface3)", border: "1px solid var(--border-light)",
-              borderRadius: 14, padding: "12px 0",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer",
-              transition: "background 0.15s"
-            }}>
+            <button key={label} onClick={() => goTo(page)} style={{ flex: 1, background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "12px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }}>
               <Icon size={18} color="var(--accent)" strokeWidth={2.5} />
               <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 600 }}>{label}</span>
             </button>
@@ -154,7 +258,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Live Prices — Lines style */}
+      {/* Live Prices */}
       <div style={{ padding: "16px 16px 0", flex: 1, minHeight: 0, overflow: "auto" }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginBottom: 14 }}>LIVE PRICES</div>
         {[
@@ -182,32 +286,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Floating Bottom Nav */}
-      <div style={{ padding: "0 20px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-around", padding: "10px 0", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20 }}>
-          {[
-            { Icon: Home, label: "Home", page: "home" },
-            { Icon: Wallet, label: "Wallet", page: "wallet" },
-            { Icon: Clock, label: "History", page: "history" },
-            { Icon: User, label: "Profile", page: "profile" },
-          ].map(({ Icon, label, page }) => {
-            const isActive = currentPage === page;
-            return (
-              <button key={label} onClick={() => { if (page === "wallet") openModal(); else setCurrentPage(page); }} style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-                cursor: "pointer", background: isActive ? "var(--accent)" : "none",
-                border: "none", padding: isActive ? "8px 16px" : "8px 16px",
-                borderRadius: isActive ? 14 : 0,
-                transition: "all 0.2s ease"
-              }}>
-                <Icon size={19} color={isActive ? "#0a0e14" : "var(--text-muted)"} strokeWidth={isActive ? 2.5 : 1.5} />
-                <span style={{ fontSize: 9, fontWeight: isActive ? 800 : 500, color: isActive ? "#0a0e14" : "var(--text-muted)" }}>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+      {bottomNav}
     </div>
   );
 }
