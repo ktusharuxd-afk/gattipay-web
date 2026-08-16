@@ -55,12 +55,7 @@ export default function SendPage({ onBack }: SendPageProps) {
         <button onClick={onBack} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
           <ArrowLeft size={18} color="var(--text-secondary)" />
         </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ArrowUpRight size={14} color="var(--accent)" strokeWidth={2.5} />
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Send</span>
-        </div>
+        <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Send</span>
       </div>
       <div style={{ margin: "0 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px" }}>
         <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>From</div>

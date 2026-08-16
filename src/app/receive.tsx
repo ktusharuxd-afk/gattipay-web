@@ -38,12 +38,7 @@ export default function ReceivePage({ onBack }: ReceivePageProps) {
         <button onClick={onBack} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
           <ArrowLeft size={18} color="var(--text-secondary)" />
         </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ArrowDownLeft size={14} color="var(--accent)" strokeWidth={2.5} />
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Receive</span>
-        </div>
+        <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Receive</span>
       </div>
 
       {/* QR Card */}

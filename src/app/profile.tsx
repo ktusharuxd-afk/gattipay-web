@@ -36,7 +36,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+    <div style={{ display: "flex", flexDirection: "column", background: "var(--bg)" }}>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
