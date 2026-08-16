@@ -223,6 +223,11 @@ export default function HomePage() {
       setConfirmNewPassword("");
       setResetError("__SUCCESS__");
       addNotification("Password reset", "Your GattiPay Wallet password was reset using your recovery phrase.", "security");
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setResetMode(false);
+        setResetError("");
+      }, 2000);
     } catch {
       setResetError("Invalid recovery phrase");
     }
