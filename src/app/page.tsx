@@ -20,7 +20,7 @@ import ProfilePage from "./profile";
 import SplashScreen from "./splash";
 import GattiWalletPage from "./gattiwallet";
 
-interface Prices { eth: number; bnb: number; whon: number; }
+interface Prices { eth: number; bnb: number; whon: number; ethChange?: number; bnbChange?: number; }
 interface Notif { id: string; title: string; subtitle: string; time: number; type: "security" | "info"; }
 
 export default function HomePage() {
@@ -99,7 +99,7 @@ export default function HomePage() {
       try {
         const res = await fetch("/api/prices");
         const data = await res.json();
-        setPrices({ eth: data.ethereum?.inr || 0, bnb: data.binancecoin?.inr || 0, whon: 0 });
+        setPrices({ eth: data.ethereum?.inr || 0, bnb: data.binancecoin?.inr || 0, whon: 0, ethChange: data.ethereum?.change24h || 0, bnbChange: data.binancecoin?.change24h || 0 });
       } catch {} finally { setLoadingPrices(false); }
     };
     fetchPrices();
@@ -616,9 +616,9 @@ export default function HomePage() {
       <div style={{ padding: "16px 16px 0", flex: 1, minHeight: 0, overflow: "auto" }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginBottom: 14 }}>LIVE PRICES</div>
         {[
-          { name: "Ethereum", symbol: "ETH", price: prices.eth, color: "#627EEA" },
-          { name: "BNB", symbol: "BNB", price: prices.bnb, color: "#F0B90B" },
-          { name: "Wrapped HON", symbol: "wHON", price: prices.whon, color: "var(--accent)" },
+          { name: "Ethereum", symbol: "ETH", price: prices.eth, change: prices.ethChange || 0, color: "#627EEA" },
+          { name: "BNB", symbol: "BNB", price: prices.bnb, change: prices.bnbChange || 0, color: "#F0B90B" },
+          { name: "Wrapped HON", symbol: "wHON", price: prices.whon, change: 0, color: "var(--accent)" },
         ].map((coin, i) => (
           <div key={coin.symbol}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0" }}>
@@ -631,8 +631,15 @@ export default function HomePage() {
                   <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500 }}>{coin.symbol}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: coin.price > 0 ? "var(--text)" : "var(--text-muted)" }}>
-                {loadingPrices ? "..." : coin.price > 0 ? `₹${coin.price.toLocaleString("en-IN")}` : "—"}
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: coin.price > 0 ? "var(--text)" : "var(--text-muted)" }}>
+                  {loadingPrices ? "..." : coin.price > 0 ? `₹${coin.price.toLocaleString("en-IN")}` : "—"}
+                </div>
+                {coin.price > 0 && coin.change !== 0 && (
+                  <div style={{ fontSize: 10, fontWeight: 700, color: coin.change >= 0 ? "var(--green)" : "var(--red)" }}>
+                    {coin.change >= 0 ? "+" : ""}{coin.change.toFixed(2)}%
+                  </div>
+                )}
               </div>
             </div>
             {i < 2 && <div style={{ height: 1, background: "var(--border)", marginLeft: 44 }} />}
