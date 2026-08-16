@@ -9,7 +9,7 @@ declare global {
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
-import { ArrowUpRight, ArrowDownLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -119,7 +119,12 @@ export default function HomePage() {
   if (currentPage === "wallet") {
     return (
       <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
-        <div style={{ padding: "14px 20px", fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Wallet</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
+          <button onClick={() => goTo("home")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
+            <ArrowLeft size={18} color="var(--text-secondary)" />
+          </button>
+          <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Wallet</span>
+        </div>
         
         <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
           {!isConnected ? (
@@ -195,7 +200,12 @@ export default function HomePage() {
   if (currentPage === "history") {
     return (
       <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
-        <div style={{ padding: "14px 20px", fontSize: 17, fontWeight: 800, color: "var(--text)" }}>History</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
+          <button onClick={() => goTo("home")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
+            <ArrowLeft size={18} color="var(--text-secondary)" />
+          </button>
+          <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>History</span>
+        </div>
         <div style={{ flex: 1, overflow: "auto" }}>
           <HistoryPage onBack={() => goTo("home")} />
         </div>
