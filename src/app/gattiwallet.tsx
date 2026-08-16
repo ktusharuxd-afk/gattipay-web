@@ -30,9 +30,14 @@ export default function GattiWalletPage({ onBack }: GattiWalletProps) {
   }, []);
 
   const createNewWallet = () => {
-    const wallet = EthersWallet.createRandom();
-    setMnemonic(wallet.mnemonic?.phrase || "");
-    setStep("create-seed");
+    try {
+      const wallet = EthersWallet.createRandom();
+      const phrase = wallet.mnemonic?.phrase || "";
+      setMnemonic(phrase);
+      setStep("create-seed");
+    } catch (e) {
+      console.error("Wallet creation failed:", e);
+    }
   };
 
   const copySeed = () => {

@@ -32,6 +32,12 @@ export default function HomePage() {
   const [prevPage, setPrevPage] = useState("home");
     const [showWalletDropdown, setShowWalletDropdown] = useState(false);
     const [showGattiWallet, setShowGattiWallet] = useState(false);
+    const [gattiWalletData, setGattiWalletData] = useState<any>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("gattipay_own_wallet");
+    if (saved) setGattiWalletData(JSON.parse(saved));
+  }, [showGattiWallet]);
     useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -187,14 +193,17 @@ export default function HomePage() {
               </button>
 
               {/* GattiPay Wallet (Coming Soon) */}
-              <button onClick={() => setShowGattiWallet(true)} style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 18, fontWeight: 900, color: "var(--accent)" }}>G</span>
+              <button onClick={() => setShowGattiWallet(true)} style={{ width: "100%", background: gattiWalletData ? "linear-gradient(135deg, var(--accent) 0%, #04b586 100%)" : "var(--surface)", border: gattiWalletData ? "none" : "1px solid var(--border)", borderRadius: 16, padding: "20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: gattiWalletData ? "rgba(0,0,0,0.15)" : "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: gattiWalletData ? "#0a0e14" : "var(--accent)" }}>G</span>
                 </div>
-                <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Create your self-custody wallet</div>
+                <div style={{ textAlign: "left", flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: gattiWalletData ? "#0a0e14" : "var(--text)" }}>GattiPay Wallet</div>
+                  <div style={{ fontSize: 11, color: gattiWalletData ? "rgba(0,0,0,0.6)" : "var(--text-muted)", fontFamily: gattiWalletData ? "monospace" : "inherit" }}>
+                    {gattiWalletData ? `${gattiWalletData.address.slice(0, 8)}...${gattiWalletData.address.slice(-6)}` : "Create your self-custody wallet"}
+                  </div>
                 </div>
+                {gattiWalletData && <div style={{ fontSize: 9, color: "#0a0e14", fontWeight: 800, background: "rgba(0,0,0,0.15)", padding: "3px 8px", borderRadius: 6 }}>ACTIVE</div>}
               </button>
 
               {/* Manage */}
