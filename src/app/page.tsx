@@ -17,6 +17,7 @@ import SwapPage from "./swap";
 import HistoryPage from "./history";
 import ProfilePage from "./profile";
 import SplashScreen from "./splash";
+import GattiWalletPage from "./gattiwallet";
 
 interface Prices { eth: number; bnb: number; whon: number; }
 
@@ -30,6 +31,7 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState("home");
   const [prevPage, setPrevPage] = useState("home");
     const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+    const [showGattiWallet, setShowGattiWallet] = useState(false);
     useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -92,6 +94,8 @@ export default function HomePage() {
   };
 
   if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  if (showGattiWallet) return <div className="page-enter"><GattiWalletPage onBack={() => setShowGattiWallet(false)} /></div>;
+
 
   // Full-screen pages (Send, Receive, Scan, Swap)
   if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => goTo("home")} /></div>;
@@ -183,13 +187,13 @@ export default function HomePage() {
               </button>
 
               {/* GattiPay Wallet (Coming Soon) */}
-              <button style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", opacity: 0.6 }}>
+              <button onClick={() => setShowGattiWallet(true)} style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
                 <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span style={{ fontSize: 18, fontWeight: 900, color: "var(--accent)" }}>G</span>
                 </div>
                 <div style={{ textAlign: "left" }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Coming Soon</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Create your self-custody wallet</div>
                 </div>
               </button>
 
@@ -293,15 +297,15 @@ export default function HomePage() {
                 <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", marginBottom: 6 }}>
                   + Connect Another Wallet
                 </button>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, opacity: 0.5 }}>
+                <button onClick={() => { setShowWalletDropdown(false); setShowGattiWallet(true); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, border: "none", cursor: "pointer" }}>
                   <div style={{ width: 22, height: 22, borderRadius: 7, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontSize: 11, fontWeight: 900, color: "var(--accent)" }}>G</span>
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, textAlign: "left" }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Coming Soon</div>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Create your own wallet</div>
                   </div>
-                </div>
+                </button>
               </div>
             )}
           </div>
