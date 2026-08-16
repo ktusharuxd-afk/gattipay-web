@@ -30,6 +30,16 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState("home");
   const [prevPage, setPrevPage] = useState("home");
     const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+    useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.wallet-dropdown-container')) {
+        setShowWalletDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -258,7 +268,7 @@ export default function HomePage() {
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, position: "relative" }}>
           <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
-          <div style={{ position: "relative" }}>
+          <div className="wallet-dropdown-container" style={{ position: "relative" }}>
             <button onClick={() => isConnected ? setShowWalletDropdown(!showWalletDropdown) : openModal()} style={{ fontSize: 10, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 5 }}>
               {isConnected ? (
                 <>
