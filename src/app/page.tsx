@@ -29,6 +29,7 @@ export default function HomePage() {
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [currentPage, setCurrentPage] = useState("home");
   const [prevPage, setPrevPage] = useState("home");
+    const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -257,15 +258,43 @@ export default function HomePage() {
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, position: "relative" }}>
           <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
-          <button onClick={() => goTo("wallet")} style={{ fontSize: 10, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 5 }}>
-            {isConnected ? (
-              <>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 13, height: 13 }} />
-                {shortAddr}
-                <ChevronDown size={11} />
-              </>
-            ) : "Connect Wallet"}
-          </button>
+          <div style={{ position: "relative" }}>
+            <button onClick={() => isConnected ? setShowWalletDropdown(!showWalletDropdown) : openModal()} style={{ fontSize: 10, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 5 }}>
+              {isConnected ? (
+                <>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 13, height: 13 }} />
+                  {shortAddr}
+                  <ChevronDown size={11} />
+                </>
+              ) : "Connect Wallet"}
+            </button>
+
+            {showWalletDropdown && isConnected && (
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 14, padding: 10, width: 220, zIndex: 50, boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
+                <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 0.5, padding: "4px 8px", marginBottom: 4 }}>CONNECTED WALLETS</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, marginBottom: 6 }}>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 22, height: 22 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>MetaMask</div>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "monospace" }}>{shortAddr}</div>
+                  </div>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} />
+                </div>
+                <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", marginBottom: 6 }}>
+                  + Connect Another Wallet
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, opacity: 0.5 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: 7, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "var(--accent)" }}>G</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Coming Soon</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <div style={{ fontSize: 34, fontWeight: 900, color: "var(--text)", letterSpacing: "-1.5px", marginBottom: 12, position: "relative" }}>
           ₹{totalINR.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
