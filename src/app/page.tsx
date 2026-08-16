@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
 import { Wallet as EthersWallet } from "ethers";
-import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X, ShieldAlert } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -39,6 +39,13 @@ export default function HomePage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState<number | null>(null);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSeed, setResetSeed] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [resetError, setResetError] = useState("");
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -52,6 +59,12 @@ export default function HomePage() {
   useEffect(() => {
     const saved = localStorage.getItem("gattipay_own_wallet");
     if (saved) setGattiWalletData(JSON.parse(saved));
+    const lockData = localStorage.getItem("gattipay_lock");
+    if (lockData) {
+      const parsed = JSON.parse(lockData);
+      if (parsed.lockUntil && parsed.lockUntil > Date.now()) setLockUntil(parsed.lockUntil);
+      setFailedAttempts(parsed.attempts || 0);
+    }
   }, [showGattiWallet]);
 
   const activeAddress = activeWallet === "gatti" && gattiWalletData ? gattiWalletData.address : address;
@@ -81,9 +94,7 @@ export default function HomePage() {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.wallet-dropdown-container')) {
-        setShowWalletDropdown(false);
-      }
+      if (!target.closest('.wallet-dropdown-container')) setShowWalletDropdown(false);
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -124,13 +135,31 @@ export default function HomePage() {
     setShowPasswordModal(true);
     setPasswordInput("");
     setPasswordError("");
+    setResetMode(false);
   };
 
   const confirmUnlock = () => {
-    if (btoa(passwordInput) !== gattiWalletData.passwordHash) {
-      setPasswordError("Incorrect password");
+    if (lockUntil && lockUntil > Date.now()) {
+      const mins = Math.ceil((lockUntil - Date.now()) / 60000);
+      setPasswordError(`Too many attempts. Try again in ${mins} min.`);
       return;
     }
+    if (btoa(passwordInput) !== gattiWalletData.passwordHash) {
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      if (newAttempts >= 3) {
+        const lock = Date.now() + 5 * 60000;
+        setLockUntil(lock);
+        localStorage.setItem("gattipay_lock", JSON.stringify({ attempts: 0, lockUntil: lock }));
+        setPasswordError("Too many failed attempts. Locked for 5 minutes.");
+      } else {
+        localStorage.setItem("gattipay_lock", JSON.stringify({ attempts: newAttempts, lockUntil: null }));
+        setPasswordError(`Incorrect password. ${3 - newAttempts} attempt(s) left.`);
+      }
+      return;
+    }
+    setFailedAttempts(0);
+    localStorage.removeItem("gattipay_lock");
     try {
       const mnemonic = atob(gattiWalletData.encryptedMnemonic);
       const wallet = EthersWallet.fromPhrase(mnemonic);
@@ -140,6 +169,39 @@ export default function HomePage() {
       setPasswordInput("");
     } catch {
       setPasswordError("Failed to unlock wallet");
+    }
+  };
+
+  const confirmReset = () => {
+    setResetError("");
+    try {
+      const wallet = EthersWallet.fromPhrase(resetSeed.trim());
+      if (wallet.address.toLowerCase() !== gattiWalletData.address.toLowerCase()) {
+        setResetError("This recovery phrase doesn't match your wallet.");
+        return;
+      }
+      if (newPassword.length < 6) {
+        setResetError("Password must be at least 6 characters");
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        setResetError("Passwords don't match");
+        return;
+      }
+      const updated = { ...gattiWalletData, passwordHash: btoa(newPassword) };
+      localStorage.setItem("gattipay_own_wallet", JSON.stringify(updated));
+      setGattiWalletData(updated);
+      localStorage.removeItem("gattipay_lock");
+      setFailedAttempts(0);
+      setLockUntil(null);
+      setResetMode(false);
+      setShowPasswordModal(false);
+      setResetSeed("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      alert("Password reset! You can now unlock with your new password.");
+    } catch {
+      setResetError("Invalid recovery phrase");
     }
   };
 
@@ -157,34 +219,72 @@ export default function HomePage() {
   if (currentPage === "scan") return <div key="scan" className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
   if (currentPage === "swap") return <div key="swap" className="page-enter"><SwapPage onBack={() => goTo("home")} activeAddress={activeAddress} isGattiWallet={activeWallet === "gatti"} /></div>;
 
+  const isLocked = lockUntil !== null && lockUntil > Date.now();
+
   const passwordModal = showPasswordModal && (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 24, padding: 24, width: "100%", maxWidth: 340 }}>
+      <div style={{ background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 24, padding: 24, width: "100%", maxWidth: 340, maxHeight: "85vh", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 32, height: 32, borderRadius: 10, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Lock size={16} color="var(--accent)" />
+              {resetMode ? <ShieldAlert size={16} color="var(--accent)" /> : <Lock size={16} color="var(--accent)" />}
             </div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text)" }}>Unlock Wallet</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text)" }}>{resetMode ? "Reset Password" : "Unlock Wallet"}</span>
           </div>
-          <button onClick={() => setShowPasswordModal(false)} style={{ background: "var(--surface3)", border: "none", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex" }}>
+          <button onClick={() => { setShowPasswordModal(false); setResetMode(false); }} style={{ background: "var(--surface3)", border: "none", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex" }}>
             <X size={16} color="var(--text-muted)" />
           </button>
         </div>
-        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>Enter your GattiPay Wallet password to unlock.</div>
-        <input
-          type="password"
-          value={passwordInput}
-          onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
-          onKeyDown={(e) => e.key === "Enter" && confirmUnlock()}
-          placeholder="Password"
-          autoFocus
-          style={{ width: "100%", background: "var(--surface3)", border: `1px solid ${passwordError ? "var(--red)" : "var(--border-light)"}`, borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "var(--text)", outline: "none", marginBottom: passwordError ? 6 : 16 }}
-        />
-        {passwordError && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 16, fontWeight: 600 }}>{passwordError}</div>}
-        <button onClick={confirmUnlock} style={{ width: "100%", background: "var(--accent)", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, color: "#0a0e14", cursor: "pointer" }}>
-          Unlock
-        </button>
+
+        {!resetMode ? (
+          <>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>Enter your GattiPay Wallet password to unlock.</div>
+            {isLocked ? (
+              <div style={{ background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: "var(--red)", fontWeight: 700 }}>{passwordError || "Wallet locked due to failed attempts."}</div>
+              </div>
+            ) : (
+              <>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && confirmUnlock()}
+                  placeholder="Password"
+                  autoFocus
+                  style={{ width: "100%", background: "var(--surface3)", border: `1px solid ${passwordError ? "var(--red)" : "var(--border-light)"}`, borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "var(--text)", outline: "none", marginBottom: passwordError ? 6 : 16 }}
+                />
+                {passwordError && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 16, fontWeight: 600 }}>{passwordError}</div>}
+                <button onClick={confirmUnlock} style={{ width: "100%", background: "var(--accent)", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, color: "#0a0e14", cursor: "pointer", marginBottom: 10 }}>
+                  Unlock
+                </button>
+              </>
+            )}
+            <button onClick={() => { setResetMode(true); setResetError(""); }} style={{ width: "100%", background: "none", border: "none", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", textAlign: "center" }}>
+              Forgot Password?
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.6 }}>Enter your 12-word recovery phrase to reset your password.</div>
+            <textarea
+              value={resetSeed}
+              onChange={(e) => setResetSeed(e.target.value)}
+              placeholder="word1 word2 word3 ..."
+              rows={3}
+              style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 12, color: "var(--text)", outline: "none", fontFamily: "monospace", resize: "none", marginBottom: 12 }}
+            />
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 6 chars)" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: 10 }} />
+            <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: resetError ? 6 : 14 }} />
+            {resetError && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 14, fontWeight: 600 }}>{resetError}</div>}
+            <button onClick={confirmReset} style={{ width: "100%", background: "var(--accent)", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, color: "#0a0e14", cursor: "pointer", marginBottom: 10 }}>
+              Reset Password
+            </button>
+            <button onClick={() => setResetMode(false)} style={{ width: "100%", background: "none", border: "none", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", textAlign: "center" }}>
+              ← Back to Unlock
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -406,9 +506,7 @@ export default function HomePage() {
             {showWalletDropdown && (
               <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 14, padding: 10, width: 220, zIndex: 50, boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                 <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 0.5, padding: "4px 8px", marginBottom: 4 }}>SWITCH WALLET</div>
-
                 {dropdownCardsOrdered}
-
                 <button onClick={() => { setShowWalletDropdown(false); openConnectModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer" }}>
                   + Add Another Wallet
                 </button>
