@@ -199,7 +199,7 @@ export default function HomePage() {
       setResetSeed("");
       setNewPassword("");
       setConfirmNewPassword("");
-      alert("Password reset! You can now unlock with your new password.");
+      setResetError("__SUCCESS__");
     } catch {
       setResetError("Invalid recovery phrase");
     }
@@ -276,7 +276,13 @@ export default function HomePage() {
             />
             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 6 chars)" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: 10 }} />
             <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: resetError ? 6 : 14 }} />
-            {resetError && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 14, fontWeight: 600 }}>{resetError}</div>}
+            {resetError && resetError !== "__SUCCESS__" && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 14, fontWeight: 600 }}>{resetError}</div>}
+            {resetError === "__SUCCESS__" && (
+              <div style={{ background: "var(--accent-dim)", border: "1px solid var(--accent)", borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                <Check size={16} color="var(--accent)" />
+                <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700 }}>Password reset! Unlock with your new password.</span>
+              </div>
+            )}
             <button onClick={confirmReset} style={{ width: "100%", background: "var(--accent)", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, color: "#0a0e14", cursor: "pointer", marginBottom: 10 }}>
               Reset Password
             </button>
