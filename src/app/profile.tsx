@@ -39,7 +39,13 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
 
       {/* Header */}
-    
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
+        <button onClick={onBack} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
+          <ArrowLeft size={18} color="var(--text-secondary)" />
+        </button>
+        <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Profile</span>
+      </div>
+
       {/* Avatar Card */}
       <div style={{ margin: "0 16px", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />

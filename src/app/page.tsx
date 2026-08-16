@@ -83,10 +83,10 @@ export default function HomePage() {
   if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
 
   // Full-screen pages (Send, Receive, Scan, Swap)
-  if (currentPage === "send") return <div className="page-enter"><SendPage onBack={() => goTo("home")} /></div>;
-  if (currentPage === "receive") return <div className="page-enter"><ReceivePage onBack={() => goTo("home")} /></div>;
-  if (currentPage === "scan") return <div className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
-  if (currentPage === "swap") return <div className="page-enter"><SwapPage onBack={() => goTo("home")} /></div>;
+  if (currentPage === "send") return <div className="slide-left"><SendPage onBack={() => goTo("home")} /></div>;
+  if (currentPage === "receive") return <div className="slide-left"><ReceivePage onBack={() => goTo("home")} /></div>;
+  if (currentPage === "scan") return <div className="slide-left"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
+  if (currentPage === "swap") return <div className="slide-left"><SwapPage onBack={() => goTo("home")} /></div>;
 
   // Bottom nav
   const bottomNav = (
@@ -118,7 +118,7 @@ export default function HomePage() {
   // Wallet page
   if (currentPage === "wallet") {
     return (
-      <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+      <div className="slide-left" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
           <button onClick={() => goTo("home")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
             <ArrowLeft size={18} color="var(--text-secondary)" />
@@ -199,7 +199,7 @@ export default function HomePage() {
   // History page (with nav)
   if (currentPage === "history") {
     return (
-      <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+      <div className="slide-left" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
           <button onClick={() => goTo("home")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "8px", cursor: "pointer", display: "flex" }}>
             <ArrowLeft size={18} color="var(--text-secondary)" />
@@ -217,7 +217,7 @@ export default function HomePage() {
   // Profile page (with nav)
   if (currentPage === "profile") {
     return (
-      <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+      <div className="slide-left" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
         <div style={{ flex: 1, overflow: "auto" }}>
           <ProfilePage onBack={() => goTo("home")} />
         </div>
@@ -228,7 +228,7 @@ export default function HomePage() {
 
   // Home page
   return (
-    <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+    <div className="slide-left" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
       {/* Header */}
      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px 0" }}>
