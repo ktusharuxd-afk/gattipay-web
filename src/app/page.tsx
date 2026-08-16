@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
 import { Wallet as EthersWallet } from "ethers";
-import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X, ShieldAlert } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X, ShieldAlert, KeyRound, ShieldCheck } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -21,6 +21,7 @@ import SplashScreen from "./splash";
 import GattiWalletPage from "./gattiwallet";
 
 interface Prices { eth: number; bnb: number; whon: number; }
+interface Notif { id: string; title: string; subtitle: string; time: number; type: "security" | "info"; }
 
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -32,6 +33,14 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState("home");
   const [prevPage, setPrevPage] = useState("home");
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [notifications, setNotifications] = useState<Notif[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("gattipay_notifications");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [showGattiWallet, setShowGattiWallet] = useState(false);
   const [gattiWalletData, setGattiWalletData] = useState<any>(null);
   const [activeWallet, setActiveWallet] = useState<"external" | "gatti">("external");
@@ -67,6 +76,13 @@ export default function HomePage() {
     }
   }, [showGattiWallet]);
 
+  const addNotification = (title: string, subtitle: string, type: "security" | "info" = "security") => {
+    const notif: Notif = { id: Date.now().toString(), title, subtitle, time: Date.now(), type };
+    const updated = [notif, ...notifications].slice(0, 20);
+    setNotifications(updated);
+    localStorage.setItem("gattipay_notifications", JSON.stringify(updated));
+  };
+
   const activeAddress = activeWallet === "gatti" && gattiWalletData ? gattiWalletData.address : address;
 
   const { data: bnbBalance } = useBalance({ address: activeAddress as `0x${string}`, chainId: 56 });
@@ -95,6 +111,7 @@ export default function HomePage() {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('.wallet-dropdown-container')) setShowWalletDropdown(false);
+      if (!target.closest('.notif-dropdown-container')) setShowNotifDropdown(false);
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -152,6 +169,7 @@ export default function HomePage() {
         setLockUntil(lock);
         localStorage.setItem("gattipay_lock", JSON.stringify({ attempts: 0, lockUntil: lock }));
         setPasswordError("Too many failed attempts. Locked for 5 minutes.");
+        addNotification("Wallet locked", "3 failed unlock attempts detected. Locked for 5 minutes.", "security");
       } else {
         localStorage.setItem("gattipay_lock", JSON.stringify({ attempts: newAttempts, lockUntil: null }));
         setPasswordError(`Incorrect password. ${3 - newAttempts} attempt(s) left.`);
@@ -194,12 +212,11 @@ export default function HomePage() {
       localStorage.removeItem("gattipay_lock");
       setFailedAttempts(0);
       setLockUntil(null);
-      setResetMode(false);
-      setShowPasswordModal(false);
       setResetSeed("");
       setNewPassword("");
       setConfirmNewPassword("");
       setResetError("__SUCCESS__");
+      addNotification("Password reset", "Your GattiPay Wallet password was reset using your recovery phrase.", "security");
     } catch {
       setResetError("Invalid recovery phrase");
     }
@@ -209,6 +226,17 @@ export default function HomePage() {
     setActiveWallet("external");
     setGattiPrivateKey(null);
     setShowWalletDropdown(false);
+  };
+
+  const formatNotifTime = (t: number) => {
+    const diff = Date.now() - t;
+    const mins = Math.floor(diff / 60000);
+    const hrs = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${days}d ago`;
   };
 
   if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
@@ -275,7 +303,7 @@ export default function HomePage() {
               style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 12, color: "var(--text)", outline: "none", fontFamily: "monospace", resize: "none", marginBottom: 12 }}
             />
             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 6 chars)" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: 10 }} />
-            <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: resetError ? 6 : 14 }} />
+            <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "var(--text)", outline: "none", marginBottom: (resetError && resetError !== "__SUCCESS__") ? 6 : 14 }} />
             {resetError && resetError !== "__SUCCESS__" && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 14, fontWeight: 600 }}>{resetError}</div>}
             {resetError === "__SUCCESS__" && (
               <div style={{ background: "var(--accent-dim)", border: "1px solid var(--accent)", borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
@@ -410,9 +438,7 @@ export default function HomePage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 4 }}>YOUR WALLETS — TAP TO USE</div>
-
               {walletCardsOrdered}
-
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 8 }}>ADD WALLET</div>
               <button onClick={openConnectModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                 <Wallet size={20} color="var(--accent)" />
@@ -424,14 +450,12 @@ export default function HomePage() {
                   <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Create GattiPay Wallet</span>
                 </button>
               )}
-
               <button onClick={openModal} style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "14px", fontSize: 13, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", textAlign: "center", marginTop: 4 }}>
                 Manage Wallet Settings
               </button>
             </div>
           )}
         </div>
-
         {bottomNav}
       </div>
     );
@@ -484,10 +508,40 @@ export default function HomePage() {
             </div>
           </div>
         </button>
-        <button onClick={() => goTo("history")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "9px", cursor: "pointer", display: "flex", position: "relative" }}>
-          <Bell size={17} color="var(--text-secondary)" />
-          {transactions.length > 0 && <div style={{ position: "absolute", top: 6, right: 6, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />}
-        </button>
+
+        <div className="notif-dropdown-container" style={{ position: "relative" }}>
+          <button onClick={() => setShowNotifDropdown(!showNotifDropdown)} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "9px", cursor: "pointer", display: "flex", position: "relative" }}>
+            <Bell size={17} color="var(--text-secondary)" />
+            {notifications.length > 0 && <div style={{ position: "absolute", top: 6, right: 6, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />}
+          </button>
+
+          {showNotifDropdown && (
+            <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 16, padding: 10, width: 280, zIndex: 50, boxShadow: "0 12px 32px rgba(0,0,0,0.4)", maxHeight: 340, overflow: "auto" }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 0.5, padding: "4px 8px 10px" }}>NOTIFICATIONS</div>
+              {notifications.length === 0 ? (
+                <div style={{ padding: "24px 12px", textAlign: "center" }}>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>No notifications yet</div>
+                </div>
+              ) : (
+                notifications.slice(0, 6).map((n) => (
+                  <div key={n.id} style={{ display: "flex", gap: 10, padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <ShieldCheck size={14} color="var(--accent)" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>{n.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.5 }}>{n.subtitle}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>{formatNotifTime(n.time)}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <button onClick={() => { setShowNotifDropdown(false); goTo("history"); }} style={{ width: "100%", background: "var(--surface3)", border: "none", borderRadius: 10, padding: "10px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", marginTop: 8 }}>
+                View Transaction History →
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ margin: "14px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "20px", position: "relative", overflow: "hidden" }}>
