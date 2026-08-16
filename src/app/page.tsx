@@ -95,6 +95,11 @@ export default function HomePage() {
     if (m) m.removeAttribute('style');
     open({ view: isConnected ? "Account" : "Connect" });
   };
+  const openConnectModal = () => {
+    const m = document.querySelector('w3m-modal') as HTMLElement;
+    if (m) m.removeAttribute('style');
+    open({ view: "Connect" });
+  };
 
   const goTo = (page: string) => {
     setPrevPage(currentPage);
@@ -223,7 +228,7 @@ export default function HomePage() {
               )}
 
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 8 }}>ADD WALLET</div>
-              <button onClick={openModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+              <button onClick={openConnectModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                 <Wallet size={20} color="var(--accent)" />
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Add Another External Wallet</span>
               </button>
@@ -352,7 +357,7 @@ export default function HomePage() {
                   </button>
                 )}
 
-                <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer" }}>
+                <button onClick={() => { setShowWalletDropdown(false); openConnectModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer" }}>
                   + Add Another Wallet
                 </button>
               </div>
