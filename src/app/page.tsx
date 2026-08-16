@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
 import { Wallet as EthersWallet } from "ethers";
-import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -36,6 +36,9 @@ export default function HomePage() {
   const [gattiWalletData, setGattiWalletData] = useState<any>(null);
   const [activeWallet, setActiveWallet] = useState<"external" | "gatti">("external");
   const [gattiPrivateKey, setGattiPrivateKey] = useState<string | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -116,10 +119,15 @@ export default function HomePage() {
       setShowGattiWallet(true);
       return;
     }
-    const pwd = prompt("Enter your GattiPay Wallet password:");
-    if (!pwd) return;
-    if (btoa(pwd) !== gattiWalletData.passwordHash) {
-      alert("Incorrect password");
+    setShowWalletDropdown(false);
+    setShowPasswordModal(true);
+    setPasswordInput("");
+    setPasswordError("");
+  };
+
+  const confirmUnlock = () => {
+    if (btoa(passwordInput) !== gattiWalletData.passwordHash) {
+      setPasswordError("Incorrect password");
       return;
     }
     try {
@@ -127,9 +135,10 @@ export default function HomePage() {
       const wallet = EthersWallet.fromPhrase(mnemonic);
       setGattiPrivateKey(wallet.privateKey);
       setActiveWallet("gatti");
-      setShowWalletDropdown(false);
+      setShowPasswordModal(false);
+      setPasswordInput("");
     } catch {
-      alert("Failed to unlock wallet");
+      setPasswordError("Failed to unlock wallet");
     }
   };
 
@@ -279,8 +288,41 @@ export default function HomePage() {
     );
   }
 
+  const passwordModal = showPasswordModal && (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 24, padding: 24, width: "100%", maxWidth: 340 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Lock size={16} color="var(--accent)" />
+            </div>
+            <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text)" }}>Unlock Wallet</span>
+          </div>
+          <button onClick={() => setShowPasswordModal(false)} style={{ background: "var(--surface3)", border: "none", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex" }}>
+            <X size={16} color="var(--text-muted)" />
+          </button>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>Enter your GattiPay Wallet password to unlock.</div>
+        <input
+          type="password"
+          value={passwordInput}
+          onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
+          onKeyDown={(e) => e.key === "Enter" && confirmUnlock()}
+          placeholder="Password"
+          autoFocus
+          style={{ width: "100%", background: "var(--surface3)", border: `1px solid ${passwordError ? "var(--red)" : "var(--border-light)"}`, borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "var(--text)", outline: "none", marginBottom: passwordError ? 6 : 16 }}
+        />
+        {passwordError && <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 16, fontWeight: 600 }}>{passwordError}</div>}
+        <button onClick={confirmUnlock} style={{ width: "100%", background: "var(--accent)", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, color: "#0a0e14", cursor: "pointer" }}>
+          Unlock
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div key="home" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+      {passwordModal}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px 0" }}>
         <button onClick={openModal} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
