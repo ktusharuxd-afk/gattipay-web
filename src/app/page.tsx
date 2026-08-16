@@ -9,7 +9,8 @@ declare global {
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract } from "wagmi";
-import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell } from "lucide-react";
+import { Wallet as EthersWallet } from "ethers";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -30,24 +31,11 @@ export default function HomePage() {
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [currentPage, setCurrentPage] = useState("home");
   const [prevPage, setPrevPage] = useState("home");
-    const [showWalletDropdown, setShowWalletDropdown] = useState(false);
-    const [showGattiWallet, setShowGattiWallet] = useState(false);
-    const [gattiWalletData, setGattiWalletData] = useState<any>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("gattipay_own_wallet");
-    if (saved) setGattiWalletData(JSON.parse(saved));
-  }, [showGattiWallet]);
-    useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.wallet-dropdown-container')) {
-        setShowWalletDropdown(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [showGattiWallet, setShowGattiWallet] = useState(false);
+  const [gattiWalletData, setGattiWalletData] = useState<any>(null);
+  const [activeWallet, setActiveWallet] = useState<"external" | "gatti">("external");
+  const [gattiPrivateKey, setGattiPrivateKey] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gattipay_txns");
@@ -58,11 +46,18 @@ export default function HomePage() {
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
 
-  const { data: bnbBalance } = useBalance({ address: address as `0x${string}`, chainId: 56 });
+  useEffect(() => {
+    const saved = localStorage.getItem("gattipay_own_wallet");
+    if (saved) setGattiWalletData(JSON.parse(saved));
+  }, [showGattiWallet]);
+
+  const activeAddress = activeWallet === "gatti" && gattiWalletData ? gattiWalletData.address : address;
+
+  const { data: bnbBalance } = useBalance({ address: activeAddress as `0x${string}`, chainId: 56 });
   const { data: wHONRaw } = useReadContract({
     address: "0x0A1Ac7aE511cEcE9493602815A11d1c53b253518",
     abi: [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] }],
-    functionName: "balanceOf", args: [address as `0x${string}`], chainId: 56,
+    functionName: "balanceOf", args: [activeAddress as `0x${string}`], chainId: 56,
   });
 
   const wHONBalance = wHONRaw ? (Number(wHONRaw) / 1e18).toFixed(2) : "0.00";
@@ -80,9 +75,20 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.wallet-dropdown-container')) {
+        setShowWalletDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const bnbVal = bnbBalance ? Number(bnbBalance.value) / 1e18 : 0;
   const totalINR = prices.bnb > 0 ? bnbVal * prices.bnb : 0;
-  const shortAddr = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
+  const shortAddr = activeAddress ? `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}` : "";
 
   const openModal = () => {
     const m = document.querySelector('w3m-modal') as HTMLElement;
@@ -99,17 +105,43 @@ export default function HomePage() {
     setCurrentPage(page);
   };
 
+  const unlockGattiWallet = () => {
+    if (!gattiWalletData) {
+      setShowWalletDropdown(false);
+      setShowGattiWallet(true);
+      return;
+    }
+    const pwd = prompt("Enter your GattiPay Wallet password:");
+    if (!pwd) return;
+    if (btoa(pwd) !== gattiWalletData.passwordHash) {
+      alert("Incorrect password");
+      return;
+    }
+    try {
+      const mnemonic = atob(gattiWalletData.encryptedMnemonic);
+      const wallet = EthersWallet.fromPhrase(mnemonic);
+      setGattiPrivateKey(wallet.privateKey);
+      setActiveWallet("gatti");
+      setShowWalletDropdown(false);
+    } catch {
+      alert("Failed to unlock wallet");
+    }
+  };
+
+  const switchToExternal = () => {
+    setActiveWallet("external");
+    setGattiPrivateKey(null);
+    setShowWalletDropdown(false);
+  };
+
   if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
   if (showGattiWallet) return <div className="page-enter"><GattiWalletPage onBack={() => setShowGattiWallet(false)} /></div>;
 
-
-  // Full-screen pages (Send, Receive, Scan, Swap)
-  if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => goTo("home")} /></div>;
-  if (currentPage === "receive") return <div key="receive" className="page-enter"><ReceivePage onBack={() => goTo("home")} /></div>;
+  if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => goTo("home")} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} /></div>;
+  if (currentPage === "receive") return <div key="receive" className="page-enter"><ReceivePage onBack={() => goTo("home")} overrideAddress={activeAddress} /></div>;
   if (currentPage === "scan") return <div key="scan" className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
   if (currentPage === "swap") return <div key="swap" className="page-enter"><SwapPage onBack={() => goTo("home")} /></div>;
 
-  // Bottom nav
   const bottomNav = (
     <div style={{ padding: "0 20px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-around", padding: "10px 0", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20 }}>
@@ -136,7 +168,6 @@ export default function HomePage() {
     </div>
   );
 
-  // Wallet page
   if (currentPage === "wallet") {
     return (
       <div key="wallet" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
@@ -148,65 +179,63 @@ export default function HomePage() {
         </div>
         
         <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
-          {!isConnected ? (
+          {!isConnected && !gattiWalletData ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 20 }}>
               <div style={{ width: 80, height: 80, borderRadius: 24, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Wallet size={36} color="var(--accent)" strokeWidth={1.5} />
               </div>
               <div style={{ fontSize: 20, fontWeight: 900, color: "var(--text)" }}>Connect Your Wallet</div>
-              <div style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", maxWidth: 260, lineHeight: 1.7 }}>Connect MetaMask, Trust Wallet or any of 380+ wallets to get started.</div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", maxWidth: 260, lineHeight: 1.7 }}>Connect MetaMask, or create your own GattiPay Wallet to get started.</div>
               <button onClick={openModal} style={{ background: "var(--accent)", border: "none", borderRadius: 16, padding: "16px 48px", fontSize: 15, fontWeight: 800, color: "#0a0e14", cursor: "pointer", boxShadow: "0 0 30px var(--accent-glow)" }}>
                 Connect Wallet
               </button>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {/* Connected Wallet */}
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 4 }}>CONNECTED WALLET</div>
-              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 32, height: 32 }} />
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>MetaMask</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace" }}>{shortAddr}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 4 }}>YOUR WALLETS — TAP TO USE</div>
+
+              {isConnected && (
+                <button onClick={switchToExternal} style={{ width: "100%", background: activeWallet === "external" ? "var(--accent-dim)" : "var(--surface)", border: activeWallet === "external" ? "1px solid var(--accent)" : "1px solid var(--border)", borderRadius: 16, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 32, height: 32 }} />
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>MetaMask</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace" }}>{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}</div>
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 700, background: "var(--accent-dim)", padding: "4px 10px", borderRadius: 8 }}>● Connected</div>
-              </div>
+                  {activeWallet === "external" ? <Check size={18} color="var(--accent)" /> : <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700 }}>TAP</div>}
+                </button>
+              )}
 
-              {/* Network */}
-              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>Network</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F0B90B" }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>BNB Smart Chain</span>
-                </div>
-              </div>
+              {gattiWalletData && (
+                <button onClick={unlockGattiWallet} style={{ width: "100%", background: activeWallet === "gatti" ? "var(--accent-dim)" : "var(--surface)", border: activeWallet === "gatti" ? "1px solid var(--accent)" : "1px solid var(--border)", borderRadius: 16, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 15, fontWeight: 900, color: "var(--accent)" }}>G</span>
+                    </div>
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace" }}>{gattiWalletData.address.slice(0, 6)}...{gattiWalletData.address.slice(-4)}</div>
+                    </div>
+                  </div>
+                  {activeWallet === "gatti" ? <Check size={18} color="var(--accent)" /> : <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700 }}>TAP</div>}
+                </button>
+              )}
 
-              {/* Add Another Wallet */}
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 8 }}>ADD WALLET</div>
-              <button onClick={openModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {!isConnected && (
+                <button onClick={openModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                   <Wallet size={20} color="var(--accent)" />
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Connect Another Wallet</span>
-              </button>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Connect MetaMask / External Wallet</span>
+                </button>
+              )}
+              {!gattiWalletData && (
+                <button onClick={() => setShowGattiWallet(true)} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: "var(--accent)" }}>G</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Create GattiPay Wallet</span>
+                </button>
+              )}
 
-              {/* GattiPay Wallet (Coming Soon) */}
-              <button onClick={() => setShowGattiWallet(true)} style={{ width: "100%", background: gattiWalletData ? "linear-gradient(135deg, var(--accent) 0%, #04b586 100%)" : "var(--surface)", border: gattiWalletData ? "none" : "1px solid var(--border)", borderRadius: 16, padding: "20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: gattiWalletData ? "rgba(0,0,0,0.15)" : "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 18, fontWeight: 900, color: gattiWalletData ? "#0a0e14" : "var(--accent)" }}>G</span>
-                </div>
-                <div style={{ textAlign: "left", flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: gattiWalletData ? "#0a0e14" : "var(--text)" }}>GattiPay Wallet</div>
-                  <div style={{ fontSize: 11, color: gattiWalletData ? "rgba(0,0,0,0.6)" : "var(--text-muted)", fontFamily: gattiWalletData ? "monospace" : "inherit" }}>
-                    {gattiWalletData ? `${gattiWalletData.address.slice(0, 8)}...${gattiWalletData.address.slice(-6)}` : "Create your self-custody wallet"}
-                  </div>
-                </div>
-                {gattiWalletData && <div style={{ fontSize: 9, color: "#0a0e14", fontWeight: 800, background: "rgba(0,0,0,0.15)", padding: "3px 8px", borderRadius: 6 }}>ACTIVE</div>}
-              </button>
-
-              {/* Manage */}
               <button onClick={openModal} style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "14px", fontSize: 13, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", textAlign: "center", marginTop: 4 }}>
                 Manage Wallet Settings
               </button>
@@ -218,9 +247,7 @@ export default function HomePage() {
       </div>
     );
   }
-    
 
-  // History page (with nav)
   if (currentPage === "history") {
     return (
       <div key="history" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
@@ -238,10 +265,9 @@ export default function HomePage() {
     );
   }
 
-  // Profile page (with nav)
   if (currentPage === "profile") {
     return (
-      <div key="home" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
+      <div key="profile" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
         <div style={{ flex: 1, overflow: "auto" }}>
           <ProfilePage onBack={() => goTo("home")} />
         </div>
@@ -250,71 +276,89 @@ export default function HomePage() {
     );
   }
 
-  // Home page
   return (
-    <div className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+    <div key="home" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
-      {/* Header */}
-     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px 0" }}>
-          <button onClick={openModal} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--surface3)", border: "1.5px solid var(--border-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <User size={16} color="var(--text-secondary)" />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px 0" }}>
+        <button onClick={openModal} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--surface3)", border: "1.5px solid var(--border-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <User size={16} color="var(--text-secondary)" />
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: 3 }}>
+              {activeAddress ? shortAddr : "Connect Wallet"}
+              <ChevronDown size={12} color="var(--text-muted)" />
             </div>
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: 3 }}>
-                {isConnected ? shortAddr : "Connect Wallet"}
-                <ChevronDown size={12} color="var(--text-muted)" />
-              </div>
-              <div style={{ fontSize: 10, color: isConnected ? "var(--accent)" : "var(--text-muted)", fontWeight: 600 }}>
-                {isConnected ? "● BNB Smart Chain" : "Tap to connect"}
-              </div>
+            <div style={{ fontSize: 10, color: activeAddress ? "var(--accent)" : "var(--text-muted)", fontWeight: 600 }}>
+              {activeAddress ? "● BNB Smart Chain" : "Tap to connect"}
             </div>
-          </button>
-          <button onClick={() => goTo("history")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "9px", cursor: "pointer", display: "flex", position: "relative" }}>
-            <Bell size={17} color="var(--text-secondary)" />
-            {transactions.length > 0 && <div style={{ position: "absolute", top: 6, right: 6, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />}
-          </button>
-        </div>
+          </div>
+        </button>
+        <button onClick={() => goTo("history")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "9px", cursor: "pointer", display: "flex", position: "relative" }}>
+          <Bell size={17} color="var(--text-secondary)" />
+          {transactions.length > 0 && <div style={{ position: "absolute", top: 6, right: 6, width: 6, height: 6, background: "var(--accent)", borderRadius: "50%" }} />}
+        </button>
+      </div>
 
-      {/* Balance Card */}
       <div style={{ margin: "14px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "20px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, position: "relative" }}>
           <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Total Balance</div>
           <div className="wallet-dropdown-container" style={{ position: "relative" }}>
-            <button onClick={() => isConnected ? setShowWalletDropdown(!showWalletDropdown) : openModal()} style={{ fontSize: 10, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: isConnected ? "var(--accent-dim)" : "var(--accent)", color: isConnected ? "var(--accent)" : "#0a0e14", boxShadow: isConnected ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 5 }}>
-              {isConnected ? (
+            <button onClick={() => activeAddress ? setShowWalletDropdown(!showWalletDropdown) : openModal()} style={{ fontSize: 10, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: activeAddress ? "var(--accent-dim)" : "var(--accent)", color: activeAddress ? "var(--accent)" : "#0a0e14", boxShadow: activeAddress ? "none" : "0 0 20px var(--accent-glow)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 5 }}>
+              {activeAddress ? (
                 <>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 13, height: 13 }} />
-                  MetaMask
+                  {activeWallet === "gatti" ? (
+                    <span style={{ fontSize: 12, fontWeight: 900 }}>G</span>
+                  ) : (
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 13, height: 13 }} />
+                  )}
+                  {activeWallet === "gatti" ? "GattiPay" : "MetaMask"}
                   <ChevronDown size={11} />
                 </>
               ) : "Connect Wallet"}
             </button>
 
-            {showWalletDropdown && isConnected && (
+            {showWalletDropdown && (
               <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--surface2)", border: "1px solid var(--border-light)", borderRadius: 14, padding: 10, width: 220, zIndex: 50, boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
-                <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 0.5, padding: "4px 8px", marginBottom: 4 }}>CONNECTED WALLETS</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, marginBottom: 6 }}>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 22, height: 22 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>MetaMask</div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "monospace" }}>{shortAddr}</div>
-                  </div>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} />
-                </div>
-                <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", marginBottom: 6 }}>
-                  + Connect Another Wallet
-                </button>
-                <button onClick={() => { setShowWalletDropdown(false); setShowGattiWallet(true); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, border: "none", cursor: "pointer" }}>
-                  <div style={{ width: 22, height: 22, borderRadius: 7, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "var(--accent)" }}>G</span>
-                  </div>
-                  <div style={{ flex: 1, textAlign: "left" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Create your own wallet</div>
-                  </div>
-                </button>
+                <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 0.5, padding: "4px 8px", marginBottom: 4 }}>SWITCH WALLET</div>
+
+                {isConnected && (
+                  <button onClick={switchToExternal} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px", background: activeWallet === "external" ? "var(--accent-dim)" : "var(--surface3)", borderRadius: 10, marginBottom: 6, border: "none", cursor: "pointer" }}>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 22, height: 22 }} />
+                    <div style={{ flex: 1, textAlign: "left" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>MetaMask</div>
+                      <div style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "monospace" }}>{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}</div>
+                    </div>
+                    {activeWallet === "external" && <Check size={14} color="var(--accent)" />}
+                  </button>
+                )}
+
+                {gattiWalletData ? (
+                  <button onClick={unlockGattiWallet} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px", background: activeWallet === "gatti" ? "var(--accent-dim)" : "var(--surface3)", borderRadius: 10, marginBottom: 6, border: "none", cursor: "pointer" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 7, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 11, fontWeight: 900, color: "var(--accent)" }}>G</span>
+                    </div>
+                    <div style={{ flex: 1, textAlign: "left" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>GattiPay Wallet</div>
+                      <div style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "monospace" }}>{gattiWalletData.address.slice(0, 6)}...{gattiWalletData.address.slice(-4)}</div>
+                    </div>
+                    {activeWallet === "gatti" && <Check size={14} color="var(--accent)" />}
+                  </button>
+                ) : (
+                  <button onClick={() => { setShowWalletDropdown(false); setShowGattiWallet(true); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px", background: "var(--surface3)", borderRadius: 10, border: "1px dashed var(--border-light)", cursor: "pointer" }}>
+                    <span style={{ fontSize: 15, fontWeight: 900, color: "var(--accent)" }}>G</span>
+                    <div style={{ flex: 1, textAlign: "left" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>Create GattiPay Wallet</div>
+                    </div>
+                  </button>
+                )}
+
+                {!isConnected && (
+                  <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer" }}>
+                    + Connect MetaMask
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -332,7 +376,6 @@ export default function HomePage() {
             <span style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 700 }}>wHON {wHONBalance}</span>
           </div>
         </div>
-        {/* Integrated Actions */}
         <div style={{ display: "flex", gap: 8, position: "relative" }}>
           {[
             { Icon: ArrowUpRight, label: "Send", page: "send" },
@@ -348,7 +391,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Live Prices */}
       <div style={{ padding: "16px 16px 0", flex: 1, minHeight: 0, overflow: "auto" }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginBottom: 14 }}>LIVE PRICES</div>
         {[

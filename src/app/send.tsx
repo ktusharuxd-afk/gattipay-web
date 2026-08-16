@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
-import { BrowserProvider, parseEther, isAddress } from "ethers";
+import { BrowserProvider, JsonRpcProvider, Wallet as EthersWallet, parseEther, isAddress } from "ethers";
 import type { Eip1193Provider } from "ethers";
 import { ArrowLeft, ArrowUpRight, CheckCircle, XCircle, Copy } from "lucide-react";
 
 interface SendPageProps {
   onBack: () => void;
+  activeAddress?: string;
+  gattiPrivateKey?: string | null;
 }
 
-export default function SendPage({ onBack }: SendPageProps) {
-  const { address, isConnected } = useAppKitAccount();
+export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: SendPageProps) {
+  const { address: externalAddress, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
+
+  const fromAddress = activeAddress || externalAddress;
+  const usingGatti = !!gattiPrivateKey;
+
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -23,16 +29,24 @@ export default function SendPage({ onBack }: SendPageProps) {
   const canSend = isValidAddress && isValidAmount && status !== "loading";
 
   const handleSend = async () => {
-    if (!isConnected || !walletProvider || !canSend) return;
+    if (!canSend) return;
     setStatus("loading");
     setErrorMsg("");
     try {
-      const provider = new BrowserProvider(walletProvider);
-      const signer = await provider.getSigner();
-      const tx = await signer.sendTransaction({ to: toAddress, value: parseEther(amount) });
+      let tx;
+      if (usingGatti && gattiPrivateKey) {
+        const provider = new JsonRpcProvider("https://bsc-dataseed.binance.org");
+        const wallet = new EthersWallet(gattiPrivateKey, provider);
+        tx = await wallet.sendTransaction({ to: toAddress, value: parseEther(amount) });
+      } else {
+        if (!isConnected || !walletProvider) throw new Error("Wallet not connected");
+        const provider = new BrowserProvider(walletProvider);
+        const signer = await provider.getSigner();
+        tx = await signer.sendTransaction({ to: toAddress, value: parseEther(amount) });
+      }
       setTxHash(tx.hash);
       setStatus("success");
-      const txRecord = { hash: tx.hash, from: address, to: toAddress, value: amount, time: Date.now() };
+      const txRecord = { hash: tx.hash, from: fromAddress, to: toAddress, value: amount, time: Date.now() };
       const existing = JSON.parse(localStorage.getItem("gattipay_txns") || "[]");
       existing.unshift(txRecord);
       localStorage.setItem("gattipay_txns", JSON.stringify(existing.slice(0, 10)));
@@ -57,12 +71,14 @@ export default function SendPage({ onBack }: SendPageProps) {
         </button>
         <span style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>Send</span>
       </div>
+
       <div style={{ margin: "0 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px" }}>
-        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>From</div>
+        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>From {usingGatti ? "(GattiPay Wallet)" : "(MetaMask)"}</div>
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "monospace" }}>
-          {address ? address.slice(0, 14) + "..." + address.slice(-8) : "Not connected"}
+          {fromAddress ? fromAddress.slice(0, 14) + "..." + fromAddress.slice(-8) : "Not connected"}
         </div>
       </div>
+
       <div style={{ margin: "12px 16px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 1, textTransform: "uppercase" }}>To Address</div>
@@ -73,6 +89,7 @@ export default function SendPage({ onBack }: SendPageProps) {
         <input value={toAddress} onChange={(e) => setToAddress(e.target.value)} placeholder="0x..." style={{ width: "100%", background: "var(--surface)", border: "1px solid " + (toAddress && !isValidAddress ? "var(--red)" : "var(--border)"), borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "var(--text)", outline: "none", fontFamily: "monospace" }} />
         {toAddress && !isValidAddress && <div style={{ fontSize: 10, color: "var(--red)", marginTop: 4, fontWeight: 700 }}>Invalid address</div>}
       </div>
+
       <div style={{ margin: "12px 16px 0" }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Amount (BNB)</div>
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -81,12 +98,15 @@ export default function SendPage({ onBack }: SendPageProps) {
           <span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 700 }}>BNB</span>
         </div>
       </div>
+
       <div style={{ flex: 1 }} />
+
       <div style={{ padding: "0 16px 20px" }}>
         <button onClick={handleSend} disabled={!canSend} style={{ width: "100%", background: canSend ? "var(--accent)" : "var(--surface3)", border: "none", borderRadius: 16, padding: "16px", fontSize: 15, fontWeight: 800, color: canSend ? "#0a0e14" : "var(--text-muted)", cursor: canSend ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: canSend ? "0 0 24px var(--accent-glow)" : "none" }}>
           {status === "loading" ? "Confirming..." : "Send BNB"}
         </button>
       </div>
+
       {status === "success" && (
         <div style={{ margin: "0 16px 16px", background: "var(--surface)", border: "1px solid var(--green)", borderRadius: 16, padding: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -97,6 +117,7 @@ export default function SendPage({ onBack }: SendPageProps) {
           <a href={"https://bscscan.com/tx/" + txHash} target="_blank" style={{ fontSize: 11, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>View on BSCScan</a>
         </div>
       )}
+
       {status === "error" && (
         <div style={{ margin: "0 16px 16px", background: "var(--surface)", border: "1px solid var(--red)", borderRadius: 16, padding: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
