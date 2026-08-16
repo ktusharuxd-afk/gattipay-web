@@ -273,7 +273,7 @@ export default function HomePage() {
               {isConnected ? (
                 <>
                   <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 13, height: 13 }} />
-                  {shortAddr}
+                  MetaMask
                   <ChevronDown size={11} />
                 </>
               ) : "Connect Wallet"}
