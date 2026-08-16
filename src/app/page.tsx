@@ -223,12 +223,10 @@ export default function HomePage() {
               )}
 
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.8, marginTop: 8 }}>ADD WALLET</div>
-              {!isConnected && (
-                <button onClick={openModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-                  <Wallet size={20} color="var(--accent)" />
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Connect MetaMask / External Wallet</span>
-                </button>
-              )}
+              <button onClick={openModal} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                <Wallet size={20} color="var(--accent)" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)" }}>Add Another External Wallet</span>
+              </button>
               {!gattiWalletData && (
                 <button onClick={() => setShowGattiWallet(true)} style={{ width: "100%", background: "var(--surface)", border: "1px dashed var(--border-light)", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                   <span style={{ fontSize: 18, fontWeight: 900, color: "var(--accent)" }}>G</span>
@@ -354,11 +352,9 @@ export default function HomePage() {
                   </button>
                 )}
 
-                {!isConnected && (
-                  <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer" }}>
-                    + Connect MetaMask
-                  </button>
-                )}
+                <button onClick={() => { setShowWalletDropdown(false); openModal(); }} style={{ width: "100%", background: "none", border: "1px dashed var(--border-light)", borderRadius: 10, padding: "8px", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer" }}>
+                  + Add Another Wallet
+                </button>
               </div>
             )}
           </div>
