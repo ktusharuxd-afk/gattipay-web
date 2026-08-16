@@ -8,7 +8,7 @@ declare global {
 }
 import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
-import { useBalance, useReadContract } from "wagmi";
+import { useBalance, useReadContract, useChainId, useSwitchChain } from "wagmi";
 import { Wallet as EthersWallet } from "ethers";
 import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X, ShieldAlert, KeyRound, ShieldCheck } from "lucide-react";
 import SendPage from "./send";
@@ -64,6 +64,9 @@ export default function HomePage() {
   });
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const isWrongNetwork = isConnected && activeWallet === "external" && chainId !== 56;
 
   useEffect(() => {
     const saved = localStorage.getItem("gattipay_own_wallet");
@@ -554,7 +557,17 @@ export default function HomePage() {
           )}
         </div>
       </div>
-
+{isWrongNetwork && (
+        <div style={{ margin: "14px 16px 0", background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--red)", flexShrink: 0 }} />
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--red)" }}>Wrong network. Switch to BNB Smart Chain.</div>
+          </div>
+          <button onClick={() => switchChain({ chainId: 56 })} style={{ background: "var(--red)", border: "none", borderRadius: 10, padding: "6px 14px", fontSize: 11, fontWeight: 800, color: "#fff", cursor: "pointer", flexShrink: 0 }}>
+            Switch
+          </button>
+        </div>
+      )}
       <div style={{ margin: "14px 16px 0", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "20px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, position: "relative" }}>
