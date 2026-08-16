@@ -73,17 +73,29 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
       </div>
 
       <div style={{ margin: "0 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px" }}>
-        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>From {usingGatti ? "(GattiPay Wallet)" : "(MetaMask)"}</div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "monospace" }}>
-          {fromAddress ? fromAddress.slice(0, 14) + "..." + fromAddress.slice(-8) : "Not connected"}
+        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>From</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {usingGatti ? (
+            <div style={{ width: 28, height: 28, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 900, color: "var(--accent)" }}>G</span>
+            </div>
+          ) : (
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 28, height: 28, flexShrink: 0 }} />
+          )}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>{usingGatti ? "GattiPay Wallet" : "MetaMask"}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", fontFamily: "monospace" }}>
+              {fromAddress ? fromAddress.slice(0, 10) + "..." + fromAddress.slice(-6) : "Not connected"}
+            </div>
+          </div>
         </div>
       </div>
 
       <div style={{ margin: "12px 16px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 1, textTransform: "uppercase" }}>To Address</div>
-          <button onClick={pasteAddress} style={{ background: "var(--accent-dim)", border: "none", borderRadius: 8, padding: "3px 10px", fontSize: 10, fontWeight: 700, color: "var(--accent)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-            <Copy size={10} /> Paste
+          <button onClick={pasteAddress} style={{ background: "var(--accent)", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 800, color: "#0a0e14", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+            <Copy size={12} /> Paste
           </button>
         </div>
         <input value={toAddress} onChange={(e) => setToAddress(e.target.value)} placeholder="0x..." style={{ width: "100%", background: "var(--surface)", border: "1px solid " + (toAddress && !isValidAddress ? "var(--red)" : "var(--border)"), borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "var(--text)", outline: "none", fontFamily: "monospace" }} />

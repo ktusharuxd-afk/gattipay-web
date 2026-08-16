@@ -2,14 +2,15 @@
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { ArrowLeft, ArrowDownLeft, Copy, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Copy, Check, AlertTriangle } from "lucide-react";
 
 interface ReceivePageProps {
   onBack: () => void;
   overrideAddress?: string;
+  isGattiWallet?: boolean;
 }
 
-export default function ReceivePage({ onBack, overrideAddress }: ReceivePageProps) {
+export default function ReceivePage({ onBack, overrideAddress, isGattiWallet }: ReceivePageProps) {
   const { address: externalAddress } = useAppKitAccount();
   const address = overrideAddress || externalAddress;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,7 +44,18 @@ export default function ReceivePage({ onBack, overrideAddress }: ReceivePageProp
 
       <div style={{ margin: "0 16px", background: "linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%)", border: "1px solid var(--border)", borderRadius: 24, padding: "28px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -50, right: -50, width: 160, height: 160, background: "var(--accent-glow)", borderRadius: "50%", filter: "blur(70px)", pointerEvents: "none" }} />
-        <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600, position: "relative" }}>Scan to receive BNB / wHON</div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+          {isGattiWallet ? (
+            <div style={{ width: 18, height: 18, borderRadius: 6, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 10, fontWeight: 900, color: "var(--accent)" }}>G</span>
+            </div>
+          ) : (
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 16, height: 16 }} />
+          )}
+          <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Scan to receive BNB / wHON</div>
+        </div>
+
         <div style={{ background: "#ffffff", borderRadius: 20, padding: 20, position: "relative" }}>
           <canvas ref={canvasRef} style={{ display: "block" }} />
         </div>
