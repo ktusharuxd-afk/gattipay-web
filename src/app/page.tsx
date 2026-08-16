@@ -206,7 +206,13 @@ export default function HomePage() {
         setResetError("Passwords don't match");
         return;
       }
-      const updated = { ...gattiWalletData, passwordHash: btoa(newPassword) };
+      const history = gattiWalletData.passwordHistory || [gattiWalletData.passwordHash];
+      if (history.includes(btoa(newPassword))) {
+        setResetError("You've used this password before. Please choose a new one.");
+        return;
+      }
+      const updatedHistory = [btoa(newPassword), ...history].slice(0, 10);
+      const updated = { ...gattiWalletData, passwordHash: btoa(newPassword), passwordHistory: updatedHistory };
       localStorage.setItem("gattipay_own_wallet", JSON.stringify(updated));
       setGattiWalletData(updated);
       localStorage.removeItem("gattipay_lock");

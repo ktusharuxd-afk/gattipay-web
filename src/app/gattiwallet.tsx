@@ -82,6 +82,7 @@ export default function GattiWalletPage({ onBack }: GattiWalletProps) {
       address: wallet.address,
       encryptedMnemonic: btoa(mnemonic),
       passwordHash: btoa(password),
+      passwordHistory: [btoa(password)],
       createdAt: Date.now(),
     };
     localStorage.setItem("gattipay_own_wallet", JSON.stringify(walletData));
