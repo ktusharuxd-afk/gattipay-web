@@ -453,7 +453,7 @@ export default function HomePage() {
   if (currentPage === "profile") {
     return (
       <div key="profile" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
-        <div style={{ flex: 1, overflow: "auto" }}><ProfilePage onBack={() => goTo("home")} /></div>
+        <div style={{ flex: 1, overflow: "auto" }}><ProfilePage onBack={() => goTo("home")} onOpenContacts={() => goTo("contacts")} /></div>
         {bottomNav}
       </div>
     );
