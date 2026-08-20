@@ -2,7 +2,7 @@
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { ArrowLeft, Copy, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Copy, Check, AlertTriangle, DollarSign } from "lucide-react";
 
 interface ReceivePageProps {
   onBack: () => void;
@@ -15,15 +15,21 @@ export default function ReceivePage({ onBack, overrideAddress, isGattiWallet }: 
   const address = overrideAddress || externalAddress;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
+  const [requestAmount, setRequestAmount] = useState("");
+  const [showRequestInput, setShowRequestInput] = useState(false);
+
+  const qrData = requestAmount && parseFloat(requestAmount) > 0
+    ? `ethereum:${address}?value=${requestAmount}`
+    : address;
 
   useEffect(() => {
     if (!address || !canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, address, {
+    QRCode.toCanvas(canvasRef.current, qrData || "", {
       width: 200,
       margin: 2,
       color: { dark: "#0a0e14", light: "#ffffff" },
     });
-  }, [address]);
+  }, [address, requestAmount]);
 
   const copyAddress = () => {
     if (address) {
@@ -53,19 +59,46 @@ export default function ReceivePage({ onBack, overrideAddress, isGattiWallet }: 
           ) : (
             <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 16, height: 16 }} />
           )}
-          <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Scan to receive BNB / wHON</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>
+            {requestAmount && parseFloat(requestAmount) > 0 ? `Requesting ${requestAmount} BNB` : "Scan to receive BNB / wHON"}
+          </div>
         </div>
 
         <div style={{ background: "#ffffff", borderRadius: 20, padding: 20, position: "relative" }}>
           <canvas ref={canvasRef} style={{ display: "block" }} />
         </div>
+
+        {!showRequestInput ? (
+          <button onClick={() => setShowRequestInput(true)} style={{ width: "100%", background: "var(--surface3)", border: "1px dashed var(--border-light)", borderRadius: 14, padding: "12px", fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, position: "relative" }}>
+            <DollarSign size={14} /> Request a specific amount
+          </button>
+        ) : (
+          <div style={{ width: "100%", position: "relative" }}>
+            <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Amount (BNB)</div>
+            <input
+              value={requestAmount}
+              onChange={(e) => setRequestAmount(e.target.value)}
+              placeholder="0.00"
+              type="number"
+              autoFocus
+              style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 12, padding: "12px 14px", fontSize: 16, fontWeight: 800, color: "var(--text)", outline: "none" }}
+            />
+            {requestAmount && (
+              <button onClick={() => { setRequestAmount(""); setShowRequestInput(false); }} style={{ marginTop: 8, background: "none", border: "none", color: "var(--text-muted)", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                Clear amount
+              </button>
+            )}
+          </div>
+        )}
+
         <div style={{ width: "100%", background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "12px 16px", position: "relative" }}>
           <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Your Wallet Address</div>
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", wordBreak: "break-all", fontFamily: "monospace", lineHeight: 1.6 }}>
             {address || "Not connected"}
           </div>
         </div>
-        <button onClick={copyAddress} style={{ width: "100%", background: copied ? "var(--accent-dim)" : "var(--accent)", border: "none", borderRadius: 16, padding: "14px", fontSize: 14, fontWeight: 800, color: copied ? "var(--accent)" : "#0a0e14", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: copied ? "none" : "0 0 24px var(--accent-glow)" }}>
+
+        <button onClick={copyAddress} style={{ width: "100%", background: copied ? "var(--accent-dim)" : "var(--accent)", border: "none", borderRadius: 16, padding: "14px", fontSize: 14, fontWeight: 800, color: copied ? "var(--accent)" : "#0a0e14", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: copied ? "none" : "0 0 24px var(--accent-glow)", position: "relative" }}>
           {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Address</>}
         </button>
       </div>
