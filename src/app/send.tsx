@@ -3,12 +3,14 @@ import { useState } from "react";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { BrowserProvider, JsonRpcProvider, Wallet as EthersWallet, Interface, parseEther, isAddress } from "ethers";
 import type { Eip1193Provider } from "ethers";
-import { ArrowLeft, ArrowUpRight, CheckCircle, XCircle, Copy } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CheckCircle, XCircle, Copy, Users } from "lucide-react";
 
 interface SendPageProps {
   onBack: () => void;
   activeAddress?: string;
   gattiPrivateKey?: string | null;
+  onOpenContacts?: () => void;
+  prefilledAddress?: string;
 }
 
 const ROUTER_ADDRESS = "0x9022D0b88f41AE6B4A0f3d34c6b4f9BFA2a40a9A";
@@ -16,14 +18,14 @@ const ROUTER_ABI = ["function send(address to) external payable"];
 const iface = new Interface(ROUTER_ABI);
 const BSC_RPC = "https://bsc-dataseed1.binance.org";
 
-export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: SendPageProps) {
+export default function SendPage({ onBack, activeAddress, gattiPrivateKey, onOpenContacts, prefilledAddress }: SendPageProps) {
   const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
 
   const fromAddress = activeAddress || address;
   const usingGatti = !!gattiPrivateKey;
 
-  const [toAddress, setToAddress] = useState("");
+  const [toAddress, setToAddress] = useState(prefilledAddress || "");
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState("");
@@ -93,9 +95,16 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
       <div style={{ margin: "12px 16px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 1, textTransform: "uppercase" }}>To Address</div>
-          <button onClick={pasteAddress} style={{ background: "var(--accent)", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 800, color: "#0a0e14", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-            <Copy size={12} /> Paste
-          </button>
+          <div style={{ display: "flex", gap: 6 }}>
+            {onOpenContacts && (
+              <button onClick={onOpenContacts} style={{ background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 800, color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                <Users size={12} /> Contacts
+              </button>
+            )}
+            <button onClick={pasteAddress} style={{ background: "var(--accent)", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 800, color: "#0a0e14", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+              <Copy size={12} /> Paste
+            </button>
+          </div>
         </div>
         <input value={toAddress} onChange={(e) => setToAddress(e.target.value)} placeholder="0x..." style={{ width: "100%", background: "var(--surface)", border: "1px solid " + (toAddress && !isValidAddress ? "var(--red)" : "var(--border)"), borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "var(--text)", outline: "none", fontFamily: "monospace" }} />
         {toAddress && !isValidAddress && <div style={{ fontSize: 10, color: "var(--red)", marginTop: 4, fontWeight: 700 }}>Invalid address</div>}
