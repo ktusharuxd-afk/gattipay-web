@@ -1,15 +1,16 @@
 "use client";
 import { useAppKitAccount, useAppKit } from "@reown/appkit/react";
 import { useBalance } from "wagmi";
-import { ArrowLeft, User, Shield, Globe, Trash2, Settings, LogOut, ChevronRight, Copy, Check, Users } from "lucide-react";
+import { ArrowLeft, User, Shield, Globe, Trash2, Settings, LogOut, ChevronRight, Copy, Check, Users, Bell } from "lucide-react";
 import { useState } from "react";
 
 interface ProfilePageProps {
   onBack: () => void;
   onOpenContacts?: () => void;
+  onOpenAlerts?: () => void;
 }
 
-export default function ProfilePage({ onBack, onOpenContacts }: ProfilePageProps) {
+export default function ProfilePage({ onBack, onOpenContacts, onOpenAlerts }: ProfilePageProps) {
   const { address, isConnected } = useAppKitAccount();
   const { open } = useAppKit();
   const { data: bnbBalance } = useBalance({ address: address as `0x${string}`, chainId: 56 });
@@ -92,6 +93,7 @@ export default function ProfilePage({ onBack, onOpenContacts }: ProfilePageProps
       <div style={{ margin: "14px 16px 0", display: "flex", flexDirection: "column", gap: 8 }}>
         {[
           { icon: <Users size={16} />, label: "Manage Contacts", action: () => onOpenContacts?.(), color: "var(--text-secondary)" },
+                    { icon: <Bell size={16} />, label: "Price Alerts", action: () => onOpenAlerts?.(), color: "var(--text-secondary)" },
           { icon: <Settings size={16} />, label: "Wallet Settings", action: disconnect, color: "var(--text-secondary)" },
           { icon: <Trash2 size={16} />, label: "Clear History", action: clearHistory, color: "var(--text-secondary)" },
         ].map((item) => (

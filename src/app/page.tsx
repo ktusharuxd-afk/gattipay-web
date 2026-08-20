@@ -20,6 +20,7 @@ import ProfilePage from "./profile";
 import SplashScreen from "./splash";
 import GattiWalletPage from "./gattiwallet";
 import ContactsPage from "./contacts";
+import AlertsPage from "./alerts";
 
 interface Prices { eth: number; bnb: number; whon: number; ethChange?: number; bnbChange?: number; }
 interface Notif { id: string; title: string; subtitle: string; time: number; type: "security" | "info"; }
@@ -89,6 +90,28 @@ export default function HomePage() {
       return updated;
     });
   };
+ const checkPriceAlerts = (currentPrices: Prices) => {
+    const saved = localStorage.getItem("gattipay_price_alerts");
+    if (!saved) return;
+    const alerts = JSON.parse(saved);
+    let updated = false;
+    const newAlerts = alerts.map((a: any) => {
+      if (a.triggered) return a;
+      const price = a.coin === "BNB" ? currentPrices.bnb : currentPrices.eth;
+      const hit = a.direction === "above" ? price >= a.targetPrice : price <= a.targetPrice;
+      if (hit && price > 0) {
+        updated = true;
+        addNotification(
+          `${a.coin} price alert!`,
+          `${a.coin} is now ${a.direction === "above" ? "above" : "below"} ₹${a.targetPrice.toLocaleString("en-IN")} (current: ₹${price.toLocaleString("en-IN")})`,
+          "info"
+        );
+        return { ...a, triggered: true };
+      }
+      return a;
+    });
+    if (updated) localStorage.setItem("gattipay_price_alerts", JSON.stringify(newAlerts));
+  };
 
   const activeGattiWallet = gattiWallets.find(w => w.id === activeGattiId) || null;
   const activeAddress = activeWallet === "gatti" && activeGattiWallet ? activeGattiWallet.address : address;
@@ -107,7 +130,9 @@ export default function HomePage() {
       try {
         const res = await fetch("/api/prices");
         const data = await res.json();
-        setPrices({ eth: data.ethereum?.inr || 0, bnb: data.binancecoin?.inr || 0, whon: 0, ethChange: data.ethereum?.change24h || 0, bnbChange: data.binancecoin?.change24h || 0 });
+        const newPrices = { eth: data.ethereum?.inr || 0, bnb: data.binancecoin?.inr || 0, whon: 0, ethChange: data.ethereum?.change24h || 0, bnbChange: data.binancecoin?.change24h || 0 };
+        setPrices(newPrices);
+        checkPriceAlerts(newPrices);
       } catch {} finally { setLoadingPrices(false); }
     };
     fetchPrices();
@@ -257,6 +282,7 @@ export default function HomePage() {
   if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => { setSelectedContactAddress(""); setSelectedContactName(""); goTo("home"); }} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} onOpenContacts={() => goTo("contacts-select")} prefilledAddress={selectedContactAddress} prefilledName={selectedContactName} /></div>;
   if (currentPage === "contacts-select") return <div key="contacts-select" className="page-enter"><ContactsPage onBack={() => goTo("send")} selectMode={true} onSelect={(addr, name) => { setSelectedContactAddress(addr); setSelectedContactName(name); goTo("send"); }} /></div>;
   if (currentPage === "contacts") return <div key="contacts" className="page-enter"><ContactsPage onBack={() => goTo("home")} /></div>;
+    if (currentPage === "alerts") return <div key="alerts" className="page-enter"><AlertsPage onBack={() => goTo("home")} /></div>;
   if (currentPage === "receive") return <div key="receive" className="page-enter"><ReceivePage onBack={() => goTo("home")} overrideAddress={activeAddress} isGattiWallet={activeWallet === "gatti"} /></div>;
   if (currentPage === "scan") return <div key="scan" className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
   if (currentPage === "swap") return <div key="swap" className="page-enter"><SwapPage onBack={() => goTo("home")} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} /></div>;
@@ -453,7 +479,7 @@ export default function HomePage() {
   if (currentPage === "profile") {
     return (
       <div key="profile" className="page-enter" style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
-        <div style={{ flex: 1, overflow: "auto" }}><ProfilePage onBack={() => goTo("home")} onOpenContacts={() => goTo("contacts")} /></div>
+        <div style={{ flex: 1, overflow: "auto" }}><ProfilePage onBack={() => goTo("home")} onOpenContacts={() => goTo("contacts")} onOpenAlerts={() => goTo("alerts")} /></div>
         {bottomNav}
       </div>
     );
