@@ -11,6 +11,7 @@ interface SendPageProps {
   gattiPrivateKey?: string | null;
   onOpenContacts?: () => void;
   prefilledAddress?: string;
+  prefilledName?: string;
 }
 
 const ROUTER_ADDRESS = "0x9022D0b88f41AE6B4A0f3d34c6b4f9BFA2a40a9A";
@@ -18,7 +19,7 @@ const ROUTER_ABI = ["function send(address to) external payable"];
 const iface = new Interface(ROUTER_ABI);
 const BSC_RPC = "https://bsc-dataseed1.binance.org";
 
-export default function SendPage({ onBack, activeAddress, gattiPrivateKey, onOpenContacts, prefilledAddress }: SendPageProps) {
+export default function SendPage({ onBack, activeAddress, gattiPrivateKey, onOpenContacts, prefilledAddress, prefilledName }: SendPageProps) {
   const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
 
@@ -26,6 +27,7 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey, onOpe
   const usingGatti = !!gattiPrivateKey;
 
   const [toAddress, setToAddress] = useState(prefilledAddress || "");
+  const [selectedContactName, setSelectedContactName] = useState(prefilledName || "");
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState("");
@@ -106,7 +108,22 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey, onOpe
             </button>
           </div>
         </div>
-        <input value={toAddress} onChange={(e) => setToAddress(e.target.value)} placeholder="0x..." style={{ width: "100%", background: "var(--surface)", border: "1px solid " + (toAddress && !isValidAddress ? "var(--red)" : "var(--border)"), borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "var(--text)", outline: "none", fontFamily: "monospace" }} />
+        {selectedContactName ? (
+          <div style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "var(--accent)" }}>
+                {selectedContactName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{selectedContactName}</div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" }}>{toAddress.slice(0, 8)}...{toAddress.slice(-6)}</div>
+              </div>
+            </div>
+            <button onClick={() => { setSelectedContactName(""); setToAddress(""); }} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Change</button>
+          </div>
+        ) : (
+          <input value={toAddress} onChange={(e) => setToAddress(e.target.value)} placeholder="0x..." style={{ width: "100%", background: "var(--surface)", border: "1px solid " + (toAddress && !isValidAddress ? "var(--red)" : "var(--border)"), borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "var(--text)", outline: "none", fontFamily: "monospace" }} />
+        )}
         {toAddress && !isValidAddress && <div style={{ fontSize: 10, color: "var(--red)", marginTop: 4, fontWeight: 700 }}>Invalid address</div>}
       </div>
 

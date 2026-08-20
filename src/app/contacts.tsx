@@ -11,7 +11,7 @@ interface Contact {
 
 interface ContactsPageProps {
   onBack: () => void;
-  onSelect?: (address: string) => void;
+  onSelect?: (address: string, name: string) => void;
   selectMode?: boolean;
 }
 
@@ -77,7 +77,7 @@ export default function ContactsPage({ onBack, onSelect, selectMode }: ContactsP
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 8 }}>
             {contacts.map((c) => (
-              <div key={c.id} onClick={() => selectMode && onSelect?.(c.address)} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: selectMode ? "pointer" : "default" }}>
+              <div key={c.id} onClick={() => selectMode && onSelect?.(c.address, c.name)} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: selectMode ? "pointer" : "default" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900, color: "var(--accent)" }}>
                     {c.name.charAt(0).toUpperCase()}

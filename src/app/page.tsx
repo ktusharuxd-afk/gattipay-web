@@ -37,6 +37,7 @@ export default function HomePage() {
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedContactAddress, setSelectedContactAddress] = useState("");
+  const [selectedContactName, setSelectedContactName] = useState("");
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [notifications, setNotifications] = useState<Notif[]>(() => {
@@ -253,8 +254,8 @@ export default function HomePage() {
   if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} />;
   if (showGattiWallet) return <div className="page-enter"><GattiWalletPage onBack={() => setShowGattiWallet(false)} /></div>;
 
-  if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => goTo("home")} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} onOpenContacts={() => goTo("contacts-select")} prefilledAddress={selectedContactAddress} /></div>;
-  if (currentPage === "contacts-select") return <div key="contacts-select" className="page-enter"><ContactsPage onBack={() => goTo("send")} selectMode={true} onSelect={(addr) => { setSelectedContactAddress(addr); goTo("send"); }} /></div>;
+  if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => { setSelectedContactAddress(""); setSelectedContactName(""); goTo("home"); }} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} onOpenContacts={() => goTo("contacts-select")} prefilledAddress={selectedContactAddress} prefilledName={selectedContactName} /></div>;
+  if (currentPage === "contacts-select") return <div key="contacts-select" className="page-enter"><ContactsPage onBack={() => goTo("send")} selectMode={true} onSelect={(addr, name) => { setSelectedContactAddress(addr); setSelectedContactName(name); goTo("send"); }} /></div>;
   if (currentPage === "contacts") return <div key="contacts" className="page-enter"><ContactsPage onBack={() => goTo("home")} /></div>;
   if (currentPage === "receive") return <div key="receive" className="page-enter"><ReceivePage onBack={() => goTo("home")} overrideAddress={activeAddress} isGattiWallet={activeWallet === "gatti"} /></div>;
   if (currentPage === "scan") return <div key="scan" className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
