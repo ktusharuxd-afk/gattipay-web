@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
-import { BrowserProvider, JsonRpcProvider, Wallet as EthersWallet, parseEther, isAddress } from "ethers";
+import { BrowserProvider, JsonRpcProvider, Wallet as EthersWallet, Interface, parseEther, isAddress } from "ethers";
 import type { Eip1193Provider } from "ethers";
 import { ArrowLeft, ArrowUpRight, CheckCircle, XCircle, Copy } from "lucide-react";
 
@@ -11,11 +11,16 @@ interface SendPageProps {
   gattiPrivateKey?: string | null;
 }
 
+const ROUTER_ADDRESS = "0x9022D0b88f41AE6B4A0f3d34c6b4f9BFA2a40a9A";
+const ROUTER_ABI = ["function send(address to) external payable"];
+const iface = new Interface(ROUTER_ABI);
+const BSC_RPC = "https://bsc-dataseed1.binance.org";
+
 export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: SendPageProps) {
-  const { address: externalAddress, isConnected } = useAppKitAccount();
+  const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
 
-  const fromAddress = activeAddress || externalAddress;
+  const fromAddress = activeAddress || address;
   const usingGatti = !!gattiPrivateKey;
 
   const [toAddress, setToAddress] = useState("");
@@ -29,20 +34,23 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
   const canSend = isValidAddress && isValidAmount && status !== "loading";
 
   const handleSend = async () => {
-    if (!canSend) return;
+    if (!canSend || !fromAddress) return;
     setStatus("loading");
     setErrorMsg("");
     try {
+      const value = parseEther(amount);
+      const data = iface.encodeFunctionData("send", [toAddress]);
+
       let tx;
       if (usingGatti && gattiPrivateKey) {
-        const provider = new JsonRpcProvider("https://bsc-dataseed.binance.org");
+        const provider = new JsonRpcProvider(BSC_RPC);
         const wallet = new EthersWallet(gattiPrivateKey, provider);
-        tx = await wallet.sendTransaction({ to: toAddress, value: parseEther(amount) });
+        tx = await wallet.sendTransaction({ to: ROUTER_ADDRESS, data, value });
       } else {
         if (!isConnected || !walletProvider) throw new Error("Wallet not connected");
         const provider = new BrowserProvider(walletProvider);
         const signer = await provider.getSigner();
-        tx = await signer.sendTransaction({ to: toAddress, value: parseEther(amount) });
+        tx = await signer.sendTransaction({ to: ROUTER_ADDRESS, data, value });
       }
       setTxHash(tx.hash);
       setStatus("success");
@@ -52,7 +60,7 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
       localStorage.setItem("gattipay_txns", JSON.stringify(existing.slice(0, 10)));
     } catch (e: unknown) {
       setStatus("error");
-      if (e instanceof Error) setErrorMsg(e.message.slice(0, 100));
+      if (e instanceof Error) setErrorMsg(e.message.slice(0, 120));
     }
   };
 
@@ -62,6 +70,9 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
       if (text.startsWith("0x")) setToAddress(text);
     } catch {}
   };
+
+  const fee = isValidAmount ? (parseFloat(amount) * 0.0025).toFixed(6) : "0.000000";
+  const willReceive = isValidAmount ? (parseFloat(amount) - parseFloat(fee)).toFixed(6) : "0.000000";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg)" }}>
@@ -73,21 +84,9 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
       </div>
 
       <div style={{ margin: "0 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px" }}>
-        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>From</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {usingGatti ? (
-            <div style={{ width: 28, height: 28, borderRadius: 9, background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ fontSize: 13, fontWeight: 900, color: "var(--accent)" }}>G</span>
-            </div>
-          ) : (
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="" style={{ width: 28, height: 28, flexShrink: 0 }} />
-          )}
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>{usingGatti ? "GattiPay Wallet" : "MetaMask"}</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", fontFamily: "monospace" }}>
-              {fromAddress ? fromAddress.slice(0, 10) + "..." + fromAddress.slice(-6) : "Not connected"}
-            </div>
-          </div>
+        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>From {usingGatti ? "(GattiPay Wallet)" : "(MetaMask)"}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "monospace" }}>
+          {fromAddress ? fromAddress.slice(0, 14) + "..." + fromAddress.slice(-8) : "Not connected"}
         </div>
       </div>
 
@@ -111,11 +110,24 @@ export default function SendPage({ onBack, activeAddress, gattiPrivateKey }: Sen
         </div>
       </div>
 
+      {isValidAmount && (
+        <div style={{ margin: "12px 16px 0", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "12px 16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>GattiPay fee (0.25%)</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text)" }}>{fee} BNB</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Recipient gets</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>{willReceive} BNB</span>
+          </div>
+        </div>
+      )}
+
       <div style={{ flex: 1 }} />
 
       <div style={{ padding: "0 16px 20px" }}>
         <button onClick={handleSend} disabled={!canSend} style={{ width: "100%", background: canSend ? "var(--accent)" : "var(--surface3)", border: "none", borderRadius: 16, padding: "16px", fontSize: 15, fontWeight: 800, color: canSend ? "#0a0e14" : "var(--text-muted)", cursor: canSend ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: canSend ? "0 0 24px var(--accent-glow)" : "none" }}>
-          {status === "loading" ? "Confirming..." : "Send BNB"}
+          {status === "loading" ? "Confirming..." : <><ArrowUpRight size={18} /> Send BNB</>}
         </button>
       </div>
 
