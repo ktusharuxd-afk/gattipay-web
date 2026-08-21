@@ -589,7 +589,7 @@ export default function HomePage() {
             { Icon: ArrowDownLeft, label: "Receive", page: "receive" },
             { Icon: QrCode, label: "Scan", page: "scan" },
             { Icon: ArrowLeftRight, label: "Swap", page: "swap" },
-            { Icon: ShoppingCart, label: "Buy", page: "buy" },
+            
           ].map(({ Icon, label, page }) => (
             <button key={label} onClick={() => goTo(page)} style={{ flex: 1, background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "12px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }}>
               <Icon size={18} color="var(--accent)" strokeWidth={2.5} />
