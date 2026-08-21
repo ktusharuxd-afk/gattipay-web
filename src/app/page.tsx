@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useBalance, useReadContract, useChainId, useSwitchChain } from "wagmi";
 import { Wallet as EthersWallet } from "ethers";
-import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeft, QrCode, ArrowLeftRight, Home, Wallet, Clock, User, ChevronDown, Bell, Check, Lock, X, ShieldAlert, ShieldCheck, ShoppingCart } from "lucide-react";
 import SendPage from "./send";
 import ReceivePage from "./receive";
 import ScanPage from "./scan";
@@ -21,6 +21,7 @@ import SplashScreen from "./splash";
 import GattiWalletPage from "./gattiwallet";
 import ContactsPage from "./contacts";
 import AlertsPage from "./alerts";
+import BuyPage from "./buy";
 
 interface Prices { eth: number; bnb: number; whon: number; ethChange?: number; bnbChange?: number; }
 interface Notif { id: string; title: string; subtitle: string; time: number; type: "security" | "info"; }
@@ -282,7 +283,8 @@ export default function HomePage() {
   if (currentPage === "send") return <div key="send" className="page-enter"><SendPage onBack={() => { setSelectedContactAddress(""); setSelectedContactName(""); goTo("home"); }} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} onOpenContacts={() => goTo("contacts-select")} prefilledAddress={selectedContactAddress} prefilledName={selectedContactName} /></div>;
   if (currentPage === "contacts-select") return <div key="contacts-select" className="page-enter"><ContactsPage onBack={() => goTo("send")} selectMode={true} onSelect={(addr, name) => { setSelectedContactAddress(addr); setSelectedContactName(name); goTo("send"); }} /></div>;
   if (currentPage === "contacts") return <div key="contacts" className="page-enter"><ContactsPage onBack={() => goTo("home")} /></div>;
-    if (currentPage === "alerts") return <div key="alerts" className="page-enter"><AlertsPage onBack={() => goTo("home")} /></div>;
+      if (currentPage === "alerts") return <div key="alerts" className="page-enter"><AlertsPage onBack={() => goTo("home")} /></div>;
+        if (currentPage === "buy") return <div key="buy" className="page-enter"><BuyPage onBack={() => goTo("home")} walletAddress={activeAddress} /></div>;
   if (currentPage === "receive") return <div key="receive" className="page-enter"><ReceivePage onBack={() => goTo("home")} overrideAddress={activeAddress} isGattiWallet={activeWallet === "gatti"} /></div>;
   if (currentPage === "scan") return <div key="scan" className="page-enter"><ScanPage onBack={() => goTo("home")} onScan={() => goTo("send")} /></div>;
   if (currentPage === "swap") return <div key="swap" className="page-enter"><SwapPage onBack={() => goTo("home")} activeAddress={activeAddress} gattiPrivateKey={activeWallet === "gatti" ? gattiPrivateKey : null} /></div>;
@@ -587,6 +589,7 @@ export default function HomePage() {
             { Icon: ArrowDownLeft, label: "Receive", page: "receive" },
             { Icon: QrCode, label: "Scan", page: "scan" },
             { Icon: ArrowLeftRight, label: "Swap", page: "swap" },
+            { Icon: ShoppingCart, label: "Buy", page: "buy" },
           ].map(({ Icon, label, page }) => (
             <button key={label} onClick={() => goTo(page)} style={{ flex: 1, background: "var(--surface3)", border: "1px solid var(--border-light)", borderRadius: 14, padding: "12px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }}>
               <Icon size={18} color="var(--accent)" strokeWidth={2.5} />
