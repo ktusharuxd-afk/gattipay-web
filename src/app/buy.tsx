@@ -10,7 +10,7 @@ const TRANSAK_API_KEY = "79bb811e-5a9c-47dd-9f00-a8d648a64d4c";
 
 export default function BuyPage({ onBack, walletAddress }: BuyPageProps) {
   const openTransak = () => {
-    const url = `https://global.transak.com?apiKey=${TRANSAK_API_KEY}&defaultCryptoCurrency=BNB&defaultNetwork=bsc&walletAddress=${walletAddress || ""}&themeColor=06d6a0`;
+    const url = `https://global-stg.transak.com?apiKey=${TRANSAK_API_KEY}&defaultCryptoCurrency=BNB&defaultNetwork=bsc&walletAddress=${walletAddress || ""}&themeColor=06d6a0&environment=STAGING`;
     window.open(url, "_blank");
   };
 
